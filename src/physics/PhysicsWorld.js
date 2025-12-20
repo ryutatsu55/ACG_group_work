@@ -24,6 +24,7 @@ export class PhysicsWorld {
         });
     }
 
+    // called from App.js for every frame
     update() {
         // rough angle
         const targetRotZ = -this.mouse.x * 1.5;
@@ -33,27 +34,29 @@ export class PhysicsWorld {
         this.saberState.rotationZ += (targetRotZ - this.saberState.rotationZ) * (1/(20*this.inertia));
         this.saberState.rotationX += (targetRotX - this.saberState.rotationX) * (1/(20*this.inertia));
 
-        // 3. 速度を計算 (移動量の絶対値)
+        // calc speed vec
         const dist = Math.sqrt(
         Math.pow(this.mouse.x - this.prevMouse.x, 2) + 
         Math.pow(this.mouse.y - this.prevMouse.y, 2)
         );
         this.saberState.swingSpeed = dist * this.sense * 100.0;
 
-        // 次のフレームのために保存
+        // save previous pos for next calc
         this.prevMouse.x = this.mouse.x;
         this.prevMouse.y = this.mouse.y;
     }
 
-    // App.js がデータを取りに来るためのゲッター
+    // called from App.js to get state
     getSaberState() {
         return this.saberState;
     }
 
+    // called from UImanager.js every time the value is changed
     setSensitivity(value) {
         this.sense = value;
     }
 
+    // called from UImanager.js every time the value is changed
     setInertia(value) {
         this.inertia = value;
     }

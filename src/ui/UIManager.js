@@ -4,6 +4,7 @@ export class UIManager {
     constructor(sceneSystem, physicsSystem) {
         this.gui = new GUI();
         
+        // receive from App.js
         this.scene = sceneSystem;
         this.physics = physicsSystem;
 
@@ -45,6 +46,7 @@ export class UIManager {
             this.physics.setSensitivity(value)
         });
         saber_folder.add(this.params, 'inertia', 0.1, 1.0).onChange((value) => {
+            // pass the value to the physics
             this.physics.setInertia(value)
         });
 
@@ -54,7 +56,7 @@ export class UIManager {
         const music_toggle = music_folder.add(this.params, 'music');
         music_toggle.name("music on/off");
         music_toggle.onChange((value) => {
-            // this.scene.lightsaber.setColor(value);
+
         });
 
 
@@ -64,10 +66,11 @@ export class UIManager {
         const algorithm_select = render_folder.add(this.params, 'algorithm', algorithm_options);
         algorithm_select.name("algorithm");
         algorithm_select.onChange((value) => {
-            // this.scene.lightsaber.setColor(value);
+
         });
     }
 
+    // App.js update saber_state which App.js gets from PhysicsWorld.js
     updateStatus(velocity, angle) {
         this.debugParams.velocity = velocity.toFixed(2); 
         this.debugParams.angle = angle.toFixed(2);

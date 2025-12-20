@@ -3,37 +3,39 @@ import { Lightsaber } from './components/Lightsaber.js';
 
 export class MainScene {
     constructor() {
-        // レンダラー設定
+        // configure renderer
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         document.body.appendChild(this.renderer.domElement);
 
-        // シーン設定
+        // define scene
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x111111);
+        this.scene.background = new THREE.Color('#360606');
 
-        // カメラ設定
-        this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        // define camera
+        this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 100);
         this.camera.position.set(0, 2, 8);
+        this.camera.lookAt(0, 0, 0);
 
-        // ライト設定
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        // define light
+        const dirLight = new THREE.DirectionalLight('#ffffffff', 1);
         dirLight.position.set(5, 5, 5);
+        dirLight.target.position.set(0, 2, 0);
         this.scene.add(dirLight);
 
-        // ライトセーバーの生成
+        // define light_saber
         this.lightsaber = new Lightsaber(this.scene);
 
-        // リサイズイベント
+        // resister a function to event listener('resize')
         window.addEventListener('resize', this.onResize.bind(this));
     }
 
-    // App.js から呼ばれる描画メソッド
+    // called from App.js
     render() {
         this.renderer.render(this.scene, this.camera);
     }
-
+    // called from window(eventlistener)
     onResize() {
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
