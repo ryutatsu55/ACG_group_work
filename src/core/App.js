@@ -1,33 +1,46 @@
 import { MainScene } from '../scenes/MainScene.js';
 import { PhysicsWorld } from '../physics/PhysicsWorld.js';
 import { UIManager } from '../ui/UIManager.js';
+import Stats from "stats.js";
 
 export class App {
   constructor() {
-    // 1. 各システムを初期化
+    this.stats = new Stats();
+    this.stats.showPanel(0); // 0: FPS, 1: ms, 2: mb
+    document.body.appendChild(this.stats.dom);
+
     this.sceneSystem = new MainScene();
     this.physicsSystem = new PhysicsWorld();
     
-    // UIには操作対象を渡す
     this.uiSystem = new UIManager(this.sceneSystem, this.physicsSystem);
 
-    // ループ開始
+    // roop start
     this.animate();
   }
 
   animate() {
     requestAnimationFrame(this.animate.bind(this));
 
+    this.stats.begin();
+
     // A. 物理計算を実行 (Physics)
+    // calc some physical data like pos, angle, speed etc...
+    // decide how the objects will behave, move or illuminate based on input like mouse
     this.physicsSystem.update();
     const physicsData = this.physicsSystem.getSaberState();
 
     // B. 計算結果を見た目に反映 (Physics -> Scene)
+    // calc how objects look and render based on the data we get from physics System
     const saber = this.sceneSystem.lightsaber;
     saber.setRotation(physicsData.rotationX, physicsData.rotationZ);
     saber.setSpeed(physicsData.swingSpeed);
 
-    // C. 描画 (Scene)
+    // C. インジケーター更新 (UI)
+    this.uiSystem.updateStatus(physicsData.swingSpeed, physicsData.rotationZ);
+
+
     this.sceneSystem.render();
+
+    this.stats.end();
   }
 }
