@@ -25,7 +25,7 @@ export class MainScene {
         this.scene.add(dirLight);
 
         // define light_saber
-        this.lightsaber = new Lightsaber(this.scene);
+        this.lightsaber = new Lightsaber(this.scene, this.camera);
 
         // resister a function to event listener('resize')
         window.addEventListener('resize', this.onResize.bind(this));

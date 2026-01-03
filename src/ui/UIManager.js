@@ -17,6 +17,7 @@ export class UIManager {
             color: '#00ff00',
             sensitivity: 0.5,
             inertia: 0.5,
+            saber_mode: false,
             music: true,
             algorithm: "A"
         };
@@ -48,6 +49,10 @@ export class UIManager {
         saber_folder.add(this.params, 'inertia', 0.1, 1.0).onChange((value) => {
             // pass the value to the physics
             this.physics.setInertia(value)
+        });
+        saber_folder.add(this.params, 'saber_mode').onChange((value) => {
+            // pass the value to the physics
+            this.scene.lightsaber.setMode(value)
         });
 
 

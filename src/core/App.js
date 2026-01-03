@@ -2,15 +2,21 @@ import { MainScene } from '../scenes/MainScene.js';
 import { PhysicsWorld } from '../physics/PhysicsWorld.js';
 import { UIManager } from '../ui/UIManager.js';
 import Stats from "stats.js";
+import * as THREE from 'three';
 
 export class App {
   constructor() {
+    this.clock = new THREE.Clock();
     this.stats = new Stats();
     this.stats.showPanel(0); // 0: FPS, 1: ms, 2: mb
     document.body.appendChild(this.stats.dom);
 
     this.sceneSystem = new MainScene();
     this.physicsSystem = new PhysicsWorld();
+
+    this.physicsSystem.onClick = () => {
+      this.sceneSystem.lightsaber.toggle();
+    };
     
     this.uiSystem = new UIManager(this.sceneSystem, this.physicsSystem);
 
@@ -20,6 +26,7 @@ export class App {
 
   animate() {
     requestAnimationFrame(this.animate.bind(this));
+    const dt = this.clock.getDelta();
 
     this.stats.begin();
 
@@ -33,7 +40,9 @@ export class App {
     // calc how objects look and render based on the data we get from physics System
     const saber = this.sceneSystem.lightsaber;
     saber.setRotation(physicsData.rotationX, physicsData.rotationZ);
+    saber.setPosition(physicsData.positionX, physicsData.positionY, physicsData.positionZ)
     saber.setSpeed(physicsData.swingSpeed);
+    saber.update(dt);
 
     // C. インジケーター更新 (UI)
     this.uiSystem.updateStatus(physicsData.swingSpeed, physicsData.rotationZ);
