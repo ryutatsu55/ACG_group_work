@@ -12,12 +12,12 @@ export class Lightsaber {
     this.uniforms = {
       uColor: { value: new THREE.Color('#00ff00') },
       uSwingSpeed: { value: 0.0 },
-      uMode: { value: 0.0 },
+      uMode: { value: 1.0 },
       uTime: { value: 0.0 },
       uCameraPosLocal: { value: new THREE.Vector3() }
     };
 
-    this.isOn = false;       // スイッチの状態 (true: ON, false: OFF)
+    this.isOn = true;       // スイッチの状態 (true: ON, false: OFF)
     this.currentScale = 0.0; // 現在の長さ (0.0 ~ 1.0)
     this.camera = camera;
 
@@ -30,7 +30,7 @@ export class Lightsaber {
     const handleMat = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.2 });
     this.handle = new THREE.Mesh(handleGeo, handleMat);
     this.handle.position.y = -0.5;
-    this.container.add(this.handle);
+    this.container.add(this.handle);             
 
     // 2. 刃 (Blade) - ShaderMaterialを使用
     // const bladeGeo = new THREE.CylinderGeometry(0.1, 0.1, 4.0, 16);
@@ -47,7 +47,7 @@ export class Lightsaber {
       
       transparent: true,
       side: THREE.DoubleSide,
-      blending: THREE.AdditiveBlending,
+      blending: THREE.NormalBlending,
       depthWrite: false
     });
 
@@ -57,12 +57,11 @@ export class Lightsaber {
     this.blade.scale.y = 0.0;
     this.blade.visible = false;
 
-    this.container.position.y = -40.0;
   }
 
   // ■ 外部から呼ばれる更新メソッド
-  toggle() {
-    this.isOn = !this.isOn;
+  toggle(value) {
+    this.isOn = value;
     
     // オマケ：音を鳴らすならここで triggerSound() とか呼ぶ
 
@@ -77,8 +76,8 @@ export class Lightsaber {
 
     // 線形補間 (Lerp) で滑らかに変化させる
     // 「今の値」に「(目標 - 今) * 0.1」を足すと、ゆっくり近づく動きになる
-    if(Math.abs(this.currentScale-targetScale) > 0.01){
-      this.currentScale += 0.03 * targetVelocity;
+    if(Math.abs(this.currentScale-targetScale) > 0.05){
+      this.currentScale += 0.08 * targetVelocity;
     }
 
     // 反映
@@ -115,9 +114,16 @@ export class Lightsaber {
 
   // 姿勢を反映する (Physics担当からの入力)
   setPosition(x, y, z) {
-    this.container.position.x = x;
-    this.container.position.y = y;
-    this.container.position.z = z;
+    if (isNaN(x) || isNaN(y) || isNaN(z)) {
+      return; 
+    }
+    const xOffset = 0.0;
+    const yOffset = 0.0;
+    const zOffset = 2.0;
+
+    this.container.position.x = x + xOffset;      
+    this.container.position.y = y + yOffset;
+    this.container.position.z = z + zOffset;
   }
 
   setMode(mode){

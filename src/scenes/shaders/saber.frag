@@ -12,8 +12,13 @@ in vec2 vUv;
 
 out vec4 fragColor;
 
+vec3 mod289(vec3 x) {
+  return x - floor(x * (1.0 / 289.0)) * 289.0;
+}
 
-vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
+vec3 permute(vec3 x) {
+    return mod289(((x*34.0)+10.0)*x);
+}
 float snoise(vec2 v){
     // ... (前回のsnoiseの中身) ...
     // 省略しますが、必ず定義を入れてください
@@ -58,7 +63,7 @@ void main() {
     vec3 lineEnd   = vec3(0.0, 4.0, 0.0);
     
     // 剣先・根元のフェード (UV座標は表面のものを使うのが安全)
-    float verticalFade = smoothstep(0.0, 0.05, vUv.y) * smoothstep(1.0, 0.95, vUv.y);
+    float verticalFade = smoothstep(-0.05, 0.03, vUv.y) * smoothstep(1.0, 0.9, vUv.y);
 
     // 2. レイマーチングの設定
     vec3 currentPos = vLocalPosition; 
@@ -77,7 +82,7 @@ void main() {
         float noiseVal = 0.0;
         if (uMode > 0.5) {
             // 時間と位置でノイズを生成
-            noiseVal = snoise(vec2(currentPos.y * 2.0 , currentPos.x * 1.0 + uTime*10.0)) * 0.008;
+            noiseVal = snoise(vec2(currentPos.y * 2.0 , currentPos.x * 1.0 + uTime*10.0)) * 0.02;
         } else {
             // noiseVal = snoise(vec2(currentPos.y, uTime)) * 0.02;
             noiseVal = 0.0;
@@ -104,12 +109,14 @@ void main() {
     vec3 glowColor = uColor;
     
     // 積算された密度をもとに最終カラーを決定
-    vec3 finalColor = mix(glowColor, coreColor, smoothstep(0.5, 4.0, totalDensity));
+    vec3 finalColor = mix(glowColor, coreColor, smoothstep(0.5, 8.0, totalDensity));
+    // vec3 finalColor = glowColor * totalDensity;
     
     // アルファ値も密度そのもの
-    float alpha = smoothstep(0.0, 1.0, totalDensity);
+    float alpha = smoothstep(0.0, 4.0, totalDensity);
 
     alpha *= verticalFade;
+    // alpha = 1.0;
 
     fragColor = vec4(finalColor * verticalFade, alpha);
 }

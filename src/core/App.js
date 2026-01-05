@@ -14,9 +14,9 @@ export class App {
     this.sceneSystem = new MainScene();
     this.physicsSystem = new PhysicsWorld();
 
-    this.physicsSystem.onClick = () => {
-      this.sceneSystem.lightsaber.toggle();
-    };
+    // this.physicsSystem.onClick = () => {
+    //   this.sceneSystem.lightsaber.toggle();
+    // };
     
     this.uiSystem = new UIManager(this.sceneSystem, this.physicsSystem);
 
@@ -39,13 +39,15 @@ export class App {
     // B. 計算結果を見た目に反映 (Physics -> Scene)
     // calc how objects look and render based on the data we get from physics System
     const saber = this.sceneSystem.lightsaber;
-    saber.setRotation(physicsData.rotationX, physicsData.rotationZ);
-    saber.setPosition(physicsData.positionX, physicsData.positionY, physicsData.positionZ)
+    saber.setRotation(physicsData.rotX, physicsData.rotZ);
+    saber.setPosition(physicsData.posX, physicsData.posY, physicsData.posZ);
     saber.setSpeed(physicsData.swingSpeed);
     saber.update(dt);
+    const stars = this.sceneSystem.stars;
+    stars.update();
 
     // C. インジケーター更新 (UI)
-    this.uiSystem.updateStatus(physicsData.swingSpeed, physicsData.rotationZ);
+    this.uiSystem.updateStatus(physicsData);
 
 
     this.sceneSystem.render();

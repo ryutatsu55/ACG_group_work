@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { Lightsaber } from './components/Lightsaber.js';
+import { Floor } from './components/Floor.js';
+import { Stars } from './components/Stars.js';
 
 export class MainScene {
     constructor() {
@@ -11,21 +13,23 @@ export class MainScene {
 
         // define scene
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color('#360606');
+        this.scene.background = new THREE.Color('#000000');
+        this.scene.fog = new THREE.Fog('#000000', 10, 50);
 
         // define camera
-        this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 100);
-        this.camera.position.set(0, 2, 8);
-        this.camera.lookAt(0, 0, 0);
+        this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+        this.camera.position.set(0, 2, 6);
+        this.camera.lookAt(0, 1, 0);
 
         // define light
-        const dirLight = new THREE.DirectionalLight('#ffffffff', 1);
+        const dirLight = new THREE.DirectionalLight('#ffffff', 1);
         dirLight.position.set(5, 5, 5);
-        dirLight.target.position.set(0, 2, 0);
         this.scene.add(dirLight);
 
         // define light_saber
         this.lightsaber = new Lightsaber(this.scene, this.camera);
+        this.floor = new Floor(this.scene);
+        this.stars = new Stars(this.scene);
 
         // resister a function to event listener('resize')
         window.addEventListener('resize', this.onResize.bind(this));

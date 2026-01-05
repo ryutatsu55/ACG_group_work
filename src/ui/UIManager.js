@@ -9,18 +9,27 @@ export class UIManager {
         this.physics = physicsSystem;
 
         this.debugParams = {
-            velocity: 0.0,
-            angle: 0.0
+            rotX: 0.0,
+            rotY: 0.0,
+            rotZ: 0.0,
+            posX: 0.0,
+            posY: 0.0,
+            posZ: 0.0,
+            swingSpeed: 0.0
         };
 
         this.params = {
+            saber_toggle: true,
+            saber_mode: true,
             color: '#00ff00',
             sensitivity: 0.5,
             inertia: 0.5,
-            saber_mode: false,
             music: true,
             algorithm: "A"
         };
+
+        this.scene.lightsaber.toggle(this.params.saber_toggle);
+        this.scene.lightsaber.setMode(this.params.saber_mode);
 
         this.setupGUI();
     }
@@ -28,21 +37,41 @@ export class UIManager {
     setupGUI() {
         const debugFolder = this.gui.addFolder('Real-time Status');
 
-        this.ctrlVelocity = debugFolder.add(this.debugParams, 'velocity');
-        this.ctrlVelocity.name('Swing Speed').disable().listen();
-        this.ctrlAngle = debugFolder.add(this.debugParams, 'angle');
-        this.ctrlAngle.name('Angle (rad)').disable().listen();
+        this.Velocity = debugFolder.add(this.debugParams, 'swingSpeed');
+        this.Velocity.name('Swing Speed').decimals(3).disable().listen();
+        this.rotX = debugFolder.add(this.debugParams, 'rotX');
+        this.rotX.name('rotX').decimals(3).disable().listen();
+        this.rotY = debugFolder.add(this.debugParams, 'rotY');
+        this.rotY.name('rotY').decimals(3).disable().listen();
+        this.rotZ = debugFolder.add(this.debugParams, 'rotZ');
+        this.rotZ.name('rotZ').decimals(3).disable().listen();
+        this.posX = debugFolder.add(this.debugParams, 'posX');
+        this.posX.name('posX').decimals(3).disable().listen();
+        this.posY = debugFolder.add(this.debugParams, 'posY');
+        this.posY.name('posY').decimals(3).disable().listen();
+        this.posZ = debugFolder.add(this.debugParams, 'posZ');
+        this.posZ.name('posZ').decimals(3).disable().listen();
 
 
 
         const saber_folder = this.gui.addFolder('Saber Settings');
 
+        saber_folder.add(this.params, 'saber_toggle').onChange((value) => {
+            // pass the value to the scene.lightsaber
+            this.scene.lightsaber.toggle(value);
+        });
+        const saber_mode = saber_folder.add(this.params, 'saber_mode');
+        saber_mode.name("snoise");
+        saber_mode.onChange((value) => {
+            // pass the value to the physics
+            this.scene.lightsaber.setMode(value)
+        });
         // execute everytime value was changed
         saber_folder.addColor(this.params, 'color').onChange((value) => {
             // pass the value to the scene.lightsaber
             this.scene.lightsaber.setColor(value);
         });
-        saber_folder.add(this.params, 'sensitivity', 0.0, 1.0).onChange((value) => {
+        saber_folder.add(this.params, 'sensitivity', 0.1, 1.0).onChange((value) => {
             // pass the value to the physics
             this.physics.setSensitivity(value)
         });
@@ -50,13 +79,10 @@ export class UIManager {
             // pass the value to the physics
             this.physics.setInertia(value)
         });
-        saber_folder.add(this.params, 'saber_mode').onChange((value) => {
-            // pass the value to the physics
-            this.scene.lightsaber.setMode(value)
-        });
+        
 
 
-        const music_folder = this.gui.addFolder('music Settings');
+        const music_folder = this.gui.addFolder('Sound Settings');
 
         const music_toggle = music_folder.add(this.params, 'music');
         music_toggle.name("music on/off");
@@ -76,8 +102,13 @@ export class UIManager {
     }
 
     // App.js update saber_state which App.js gets from PhysicsWorld.js
-    updateStatus(velocity, angle) {
-        this.debugParams.velocity = velocity.toFixed(2); 
-        this.debugParams.angle = angle.toFixed(2);
+    updateStatus(saber_state) {
+        this.debugParams.swingSpeed = saber_state.swingSpeed;
+        this.debugParams.rotX = saber_state.rotX;
+        this.debugParams.rotY = saber_state.rotY;
+        this.debugParams.rotZ = saber_state.rotZ;
+        this.debugParams.posX = saber_state.posX;
+        this.debugParams.posY = saber_state.posY;
+        this.debugParams.posZ = saber_state.posZ;
     }
 }
