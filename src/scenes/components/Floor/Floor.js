@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import vertexShader from '../shaders/floor.vert';
-import fragmentShader from '../shaders/floor.frag';
+import vertexShader from './floor.vert';
+import fragmentShader from './floor.frag';
 
 export class Floor {
     constructor(scene) {

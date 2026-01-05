@@ -3,6 +3,7 @@ import { PhysicsWorld } from '../physics/PhysicsWorld.js';
 import { UIManager } from '../ui/UIManager.js';
 import Stats from "stats.js";
 import * as THREE from 'three';
+// import { Sound } from './Sound.js';
 
 export class App {
   constructor() {

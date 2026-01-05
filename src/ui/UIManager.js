@@ -24,12 +24,14 @@ export class UIManager {
             color: '#00ff00',
             sensitivity: 0.5,
             inertia: 0.5,
-            music: true,
+            sound: false,
+            music: false,
             algorithm: "A"
         };
 
         this.scene.lightsaber.toggle(this.params.saber_toggle);
         this.scene.lightsaber.setMode(this.params.saber_mode);
+        this.scene.lightsaber.setSoundEnable(this.params.sound);
 
         this.setupGUI();
     }
@@ -84,6 +86,11 @@ export class UIManager {
 
         const music_folder = this.gui.addFolder('Sound Settings');
 
+        const sound_toggle = music_folder.add(this.params, 'sound');
+        sound_toggle.name("sound on/off");
+        sound_toggle.onChange((value) => {
+            this.scene.lightsaber.setSoundEnable(value);
+        });
         const music_toggle = music_folder.add(this.params, 'music');
         music_toggle.name("music on/off");
         music_toggle.onChange((value) => {

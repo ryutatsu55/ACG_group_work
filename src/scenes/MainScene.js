@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import { Lightsaber } from './components/Lightsaber.js';
-import { Floor } from './components/Floor.js';
-import { Stars } from './components/Stars.js';
+import { Lightsaber } from './components/LightSaber/Lightsaber.js';
+import { Floor } from './components/Floor/Floor.js';
+import { Stars } from './components/Stars/Stars.js';
 
 export class MainScene {
     constructor() {

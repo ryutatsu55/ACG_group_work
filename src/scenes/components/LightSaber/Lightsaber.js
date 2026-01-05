@@ -1,7 +1,8 @@
 import * as THREE from 'three';
+import { SoundController } from './SoundEffect.js';
 
-import vertexShader from '../shaders/saber.vert';
-import fragmentShader from '../shaders/saber.frag';
+import vertexShader from './saber.vert';
+import fragmentShader from './saber.frag';
 
 export class Lightsaber {
   constructor(scene, camera) {
@@ -17,9 +18,11 @@ export class Lightsaber {
       uCameraPosLocal: { value: new THREE.Vector3() }
     };
 
-    this.isOn = true;       // スイッチの状態 (true: ON, false: OFF)
+    this.isOn = null;       // スイッチの状態 (true: ON, false: OFF)
     this.currentScale = 0.0; // 現在の長さ (0.0 ~ 1.0)
     this.camera = camera;
+
+    this.soundController = null;
 
     this.init();
   }
@@ -30,7 +33,9 @@ export class Lightsaber {
     const handleMat = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.2 });
     this.handle = new THREE.Mesh(handleGeo, handleMat);
     this.handle.position.y = -0.5;
-    this.container.add(this.handle);             
+    this.container.add(this.handle);
+
+    this.soundController = new SoundController(this.camera, this.handle);
 
     // 2. 刃 (Blade) - ShaderMaterialを使用
     // const bladeGeo = new THREE.CylinderGeometry(0.1, 0.1, 4.0, 16);
@@ -59,41 +64,10 @@ export class Lightsaber {
 
   }
 
-  // ■ 外部から呼ばれる更新メソッド
-  toggle(value) {
-    this.isOn = value;
-    
-    // オマケ：音を鳴らすならここで triggerSound() とか呼ぶ
-
-  }
-
-  // ■ 毎フレーム呼ばれるアニメーション更新
-  update(dt) {
-    this.uniforms.uTime.value += dt;
-    // 目標値 (ONなら1.0、OFFなら0.0)
-    const targetScale = this.isOn ? 1.0 : 0.0;
-    const targetVelocity = this.isOn ? 1.0 : -1.0
-
-    // 線形補間 (Lerp) で滑らかに変化させる
-    // 「今の値」に「(目標 - 今) * 0.1」を足すと、ゆっくり近づく動きになる
-    if(Math.abs(this.currentScale-targetScale) > 0.05){
-      this.currentScale += 0.08 * targetVelocity;
+  setSoundEnable(bool) {
+    if (this.soundController) {
+      this.soundController.setEnable(bool);
     }
-
-    // 反映
-    this.blade.scale.y = this.currentScale;
-
-    // 最適化：ほぼゼロなら非表示にする (描画負荷を下げるため)
-    if (this.currentScale < 0.01) {
-      this.blade.visible = false;
-    } else {
-      this.blade.visible = true;
-    }
-
-    this.uniforms.uCameraPosLocal.value.copy(this.camera.position);
-    this.container.updateMatrixWorld(); // 最新の行列を確定
-    const inverseMatrix = this.container.matrixWorld.clone().invert();
-    this.uniforms.uCameraPosLocal.value.applyMatrix4(inverseMatrix);
   }
 
   // 色を変える (UI担当からの入力)
@@ -128,5 +102,44 @@ export class Lightsaber {
 
   setMode(mode){
     this.uniforms.uMode.value = mode;
+  }
+
+  // ■ 外部から呼ばれる更新メソッド
+  toggle(value) {
+    this.isOn = value;
+    
+    this.soundController.toggle(value);
+  }
+  
+  // ■ 毎フレーム呼ばれるアニメーション更新
+  update(dt) {
+    this.uniforms.uTime.value += dt;
+    // 目標値 (ONなら1.0、OFFなら0.0)
+    const targetScale = this.isOn ? 1.0 : 0.0;
+    const targetVelocity = this.isOn ? 1.0 : -1.0
+
+    // 線形補間 (Lerp) で滑らかに変化させる
+    // 「今の値」に「(目標 - 今) * 0.1」を足すと、ゆっくり近づく動きになる
+    if(Math.abs(this.currentScale-targetScale) > 0.05){
+      this.currentScale += 0.08 * targetVelocity;
+    }
+
+    // 反映
+    this.blade.scale.y = this.currentScale;
+
+    // 最適化：ほぼゼロなら非表示にする (描画負荷を下げるため)
+    if (this.currentScale < 0.01) {
+      this.blade.visible = false;
+    } else {
+      this.blade.visible = true;
+    }
+
+    this.uniforms.uCameraPosLocal.value.copy(this.camera.position);
+    this.container.updateMatrixWorld(); // 最新の行列を確定
+    const inverseMatrix = this.container.matrixWorld.clone().invert();
+    this.uniforms.uCameraPosLocal.value.applyMatrix4(inverseMatrix);
+
+    const speed = this.uniforms.uSwingSpeed.value;
+    this.soundController.update(speed);
   }
 }
