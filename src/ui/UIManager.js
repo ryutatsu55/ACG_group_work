@@ -26,7 +26,11 @@ export class UIManager {
             inertia: 0.5,
             sound: false,
             music: false,
-            algorithm: "A"
+            algorithm: "A",
+            // Handle material settings
+            metalness: 0.9,
+            roughness: 0.3,
+            handleColor: '#666666'
         };
 
         this.scene.lightsaber.toggle(this.params.saber_toggle);
@@ -81,8 +85,21 @@ export class UIManager {
             // pass the value to the physics
             this.physics.setInertia(value)
         });
-        
 
+        // Handle Material Settings
+        const handleFolder = this.gui.addFolder('Handle Material');
+
+        handleFolder.add(this.params, 'metalness', 0.0, 1.0).name('Metalness').onChange((value) => {
+            this.scene.lightsaber.setMetalness(value);
+        });
+
+        handleFolder.add(this.params, 'roughness', 0.04, 1.0).name('Roughness').onChange((value) => {
+            this.scene.lightsaber.setRoughness(value);
+        });
+
+        handleFolder.addColor(this.params, 'handleColor').name('Handle Color').onChange((value) => {
+            this.scene.lightsaber.setHandleColor(value);
+        });
 
         const music_folder = this.gui.addFolder('Sound Settings');
 
