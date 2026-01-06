@@ -1,10 +1,6 @@
 import * as THREE from 'three';
 import { SoundController } from './SoundEffect.js';
 
-// Blade shaders (volumetric light bar)
-import bladeVertexShader from './blade.vert';
-import bladeFragmentShader from './blade.frag';
-
 // Handle shaders (metallic PBR)
 import handleVertexShader from './handle.vert';
 import handleFragmentShader from './handle.frag';
@@ -18,16 +14,8 @@ export class Lightsaber {
     this.isOn = null;
     this.currentScale = 0.0;
 
-    // Blade uniforms (volumetric rendering)
-    this.bladeUniforms = {
-      uColor: { value: new THREE.Color('#00ff00') },
-      uSwingSpeed: { value: 0.0 },
-      uMode: { value: 1.0 },
-      uTime: { value: 0.0 },
-      uCameraPosLocal: { value: new THREE.Vector3() },
-      uCoreIntensity: { value: 1.0 },
-      uScatterDensity: { value: 1.0 }
-    };
+    // Blade color (used for emissive and light)
+    this.bladeColor = new THREE.Color('#00ff00');
 
     // Handle uniforms (PBR metallic)
     this.handleUniforms = {
@@ -45,7 +33,13 @@ export class Lightsaber {
       uAmbientIntensity: { value: 0.15 }
     };
 
-    // Legacy uniform reference (for backward compatibility with UI)
+    // Legacy uniform reference (for backward compatibility)
+    this.bladeUniforms = {
+      uColor: { value: this.bladeColor },
+      uSwingSpeed: { value: 0.0 },
+      uMode: { value: 1.0 },
+      uTime: { value: 0.0 }
+    };
     this.uniforms = this.bladeUniforms;
 
     this.soundController = null;
@@ -77,33 +71,44 @@ export class Lightsaber {
   }
 
   // ============================================
-  // Blade Creation (Volumetric Light Bar)
+  // Blade Creation (Emissive Material + Light)
   // ============================================
   _createBlade() {
-    // Hollow cylinder for volumetric ray marching
-    const bladeGeo = new THREE.CylinderGeometry(0.12, 0.12, 4.0, 32, 5, true);
-    bladeGeo.translate(0, 2.0, 0);
+    const bladeHeight = 4.0;
+    const bladeRadius = 0.08;
 
-    const bladeMat = new THREE.ShaderMaterial({
-      vertexShader: bladeVertexShader,
-      fragmentShader: bladeFragmentShader,
-      uniforms: this.bladeUniforms,
-      glslVersion: THREE.GLSL3,
-      transparent: true,
-      side: THREE.DoubleSide,
-      blending: THREE.NormalBlending,
-      depthWrite: false
+    // Capsule geometry for rounded ends
+    const bladeGeo = new THREE.CapsuleGeometry(bladeRadius, bladeHeight, 4, 16);
+    bladeGeo.translate(0, bladeHeight / 2, 0);
+
+    // MeshStandardMaterial with strong emissive
+    this.bladeMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,           // White base
+      emissive: this.bladeColor, // Colored glow
+      emissiveIntensity: 5.0,    // Strong emission
+      transparent: false,
+      roughness: 0.3,
+      metalness: 0.0
     });
 
-    this.blade = new THREE.Mesh(bladeGeo, bladeMat);
+    this.blade = new THREE.Mesh(bladeGeo, this.bladeMat);
     this.container.add(this.blade);
     this.blade.scale.y = 0.0;
     this.blade.visible = false;
-    this.bladeMat = bladeMat;
+
+    // PointLight attached to blade for environment lighting
+    this.bladeLight = new THREE.PointLight(
+      this.bladeColor,
+      150,    // intensity
+      50,     // distance
+      2       // decay
+    );
+    this.bladeLight.position.y = bladeHeight / 2;
+    this.blade.add(this.bladeLight);
   }
 
   // ============================================
-  // Public API (Backward Compatible)
+  // Public API
   // ============================================
 
   setSoundEnable(bool) {
@@ -113,10 +118,15 @@ export class Lightsaber {
   }
 
   setColor(hex) {
-    // Update blade color
-    this.bladeUniforms.uColor.value.set(hex);
+    this.bladeColor.set(hex);
+    // Update blade material emissive
+    this.bladeMat.emissive.set(hex);
+    // Update point light color
+    this.bladeLight.color.set(hex);
     // Sync handle's blade light color
     this.handleUniforms.uBladeColor.value.set(hex);
+    // Legacy uniform
+    this.bladeUniforms.uColor.value.set(hex);
   }
 
   setSpeed(speed) {
@@ -190,11 +200,13 @@ export class Lightsaber {
       this.blade.visible = true;
     }
 
-    // Update camera position in local space for blade shader
-    this.bladeUniforms.uCameraPosLocal.value.copy(this.camera.position);
+    // Update light intensity based on blade scale
+    this.bladeLight.intensity = 150 * this.currentScale;
+
+    // Update emissive intensity based on scale
+    this.bladeMat.emissiveIntensity = 5.0 * this.currentScale;
+
     this.container.updateMatrixWorld();
-    const inverseMatrix = this.container.matrixWorld.clone().invert();
-    this.bladeUniforms.uCameraPosLocal.value.applyMatrix4(inverseMatrix);
 
     // ============================================
     // Sync Blade Light to Handle

@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { Lightsaber } from './components/LightSaber/Lightsaber.js';
 import { Floor } from './components/Floor/Floor.js';
 import { Stars } from './components/Stars/Stars.js';
@@ -9,6 +12,8 @@ export class MainScene {
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.toneMappingExposure = 1.0;
         document.body.appendChild(this.renderer.domElement);
 
         // define scene
@@ -31,18 +36,38 @@ export class MainScene {
         this.floor = new Floor(this.scene);
         this.stars = new Stars(this.scene);
 
+        // Setup post-processing with bloom
+        this._setupPostProcessing();
+
         // resister a function to event listener('resize')
         window.addEventListener('resize', this.onResize.bind(this));
     }
 
+    _setupPostProcessing() {
+        const renderScene = new RenderPass(this.scene, this.camera);
+
+        // UnrealBloomPass parameters: resolution, strength, radius, threshold
+        this.bloomPass = new UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            1.5,    // strength - intensity of bloom
+            0.4,    // radius - spread of bloom
+            0.1     // threshold - brightness cutoff for bloom
+        );
+
+        this.composer = new EffectComposer(this.renderer);
+        this.composer.addPass(renderScene);
+        this.composer.addPass(this.bloomPass);
+    }
+
     // called from App.js
     render() {
-        this.renderer.render(this.scene, this.camera);
+        this.composer.render();
     }
     // called from window(eventlistener)
     onResize() {
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.composer.setSize(window.innerWidth, window.innerHeight);
     }
 }
