@@ -26,12 +26,19 @@ export class UIManager {
             inertia: 0.5,
             sound: false,
             music: false,
-            algorithm: "A"
+            algorithm: "A",
+            // ★追加: Handle material settings
+            metalness: 0.9,
+            roughness: 0.3,
+            handleColor: '#666666'
         };
 
-        this.scene.lightsaber.toggle(this.params.saber_toggle);
-        this.scene.lightsaber.setMode(this.params.saber_mode);
-        this.scene.lightsaber.setSoundEnable(this.params.sound);
+        // 初期化時の反映
+        if (this.scene.lightsaber) {
+            this.scene.lightsaber.toggle(this.params.saber_toggle);
+            this.scene.lightsaber.setMode(this.params.saber_mode);
+            this.scene.lightsaber.setSoundEnable(this.params.sound);
+        }
 
         this.setupGUI();
     }
@@ -55,33 +62,41 @@ export class UIManager {
         this.posZ.name('posZ').decimals(3).disable().listen();
 
 
-
         const saber_folder = this.gui.addFolder('Saber Settings');
 
         saber_folder.add(this.params, 'saber_toggle').onChange((value) => {
-            // pass the value to the scene.lightsaber
             this.scene.lightsaber.toggle(value);
         });
         const saber_mode = saber_folder.add(this.params, 'saber_mode');
         saber_mode.name("snoise");
         saber_mode.onChange((value) => {
-            // pass the value to the physics
             this.scene.lightsaber.setMode(value)
         });
-        // execute everytime value was changed
+        
         saber_folder.addColor(this.params, 'color').onChange((value) => {
-            // pass the value to the scene.lightsaber
             this.scene.lightsaber.setColor(value);
         });
         saber_folder.add(this.params, 'sensitivity', 0.1, 1.0).onChange((value) => {
-            // pass the value to the physics
             this.physics.setSensitivity(value)
         });
         saber_folder.add(this.params, 'inertia', 0.1, 1.0).onChange((value) => {
-            // pass the value to the physics
             this.physics.setInertia(value)
         });
-        
+
+        // ★追加: Handle Material Settings
+        const handleFolder = this.gui.addFolder('Handle Material');
+
+        handleFolder.add(this.params, 'metalness', 0.0, 1.0).name('Metalness').onChange((value) => {
+            if(this.scene.lightsaber) this.scene.lightsaber.setMetalness(value);
+        });
+
+        handleFolder.add(this.params, 'roughness', 0.04, 1.0).name('Roughness').onChange((value) => {
+            if(this.scene.lightsaber) this.scene.lightsaber.setRoughness(value);
+        });
+
+        handleFolder.addColor(this.params, 'handleColor').name('Handle Color').onChange((value) => {
+            if(this.scene.lightsaber) this.scene.lightsaber.setHandleColor(value);
+        });
 
 
         const music_folder = this.gui.addFolder('Sound Settings');
@@ -102,11 +117,13 @@ export class UIManager {
 
         const render_folder = this.gui.addFolder('rendering Settings');
 
-        const algorithm_options = ["A", "B", "C"];
+        const algorithm_options = ["A", "B"];
         const algorithm_select = render_folder.add(this.params, 'algorithm', algorithm_options);
         algorithm_select.name("algorithm");
         algorithm_select.onChange((value) => {
-
+            if (this.scene.lightsaber) {
+                this.scene.lightsaber.setAlgorithm(value);
+            }
         });
     }
 
