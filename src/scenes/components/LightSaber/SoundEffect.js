@@ -2,16 +2,15 @@ import * as THREE from 'three';
 
 export class SoundController {
   /**
-   * @param {THREE.Camera} camera - 音を聞く人 (AudioListener用)
+   * @param {THREE.AudioListener} listener - 音を聞く人 (AudioListener用)
    * @param {THREE.Object3D} sourceMesh - 音が鳴る場所 (ライトセーバーの柄)
    */
-  constructor(camera, sourceMesh) {
-    this.camera = camera;
+  constructor(listener, sourceMesh) {
+    this.listener = listener; 
     this.sourceMesh = sourceMesh;
 
     // カメラに耳 (Listener) を追加
     this.listener = new THREE.AudioListener();
-    this.camera.add(this.listener);
 
     this.humSound = null;   // 待機音
     this.swingSound = null; // スイング音
@@ -79,12 +78,16 @@ export class SoundController {
   setEnable(bool) {
     this.isEnabled = bool;
 
+    if (!this.isLoaded) return;
+
     if (this.isEnabled) {
-      if (this.isOn && this.isLoaded) {
-        if (!this.humSound.isPlaying) this.humSound.play();
+      if (this.isOn) {
+        this.humSound.play();
       }
     } else {
-      if (this.humSound && this.humSound.isPlaying) this.humSound.stop();
+        this.humSound.stop();
+        this.onSound.stop();
+        this.offSound.stop();
     }
   }
 
@@ -92,7 +95,7 @@ export class SoundController {
   toggle(bool) {
     this.isOn = bool;
 
-    if (!this.isLoaded) return;
+    if (!this.isLoaded || !this.isEnabled) return;
 
     if (this.isOn) {
       if (!this.humSound.isPlaying) this.humSound.play();
@@ -112,7 +115,10 @@ export class SoundController {
 
   // 毎フレーム呼び出し: 速度を受け取って音量を更新
   update(speed) {
-    if (!this.isOn || !this.isLoaded || !this.humSound.isPlaying) return;
+    if (!this.isEnabled) return;
+    if (!this.isOn) return;
+    if (!this.isLoaded) return;
+    if (!this.humSound.isPlaying) return;
 
     const temp = Math.min(speed * 0.1, 1.0);
     const targetVolume = Math.max(temp, 0.3);

@@ -1,10 +1,10 @@
 import * as THREE from 'three';
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { Lightsaber } from './components/LightSaber/Lightsaber.js';
 import { Floor } from './components/Floor/Floor.js';
 import { Stars } from './components/Stars/Stars.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 
 export class MainScene {
     constructor() {
@@ -26,13 +26,24 @@ export class MainScene {
         this.camera.position.set(0, 2, 6);
         this.camera.lookAt(0, 1, 0);
 
+        this.listener = new THREE.AudioListener();
+        this.camera.add(this.listener);
+
+        this.bgm = new THREE.Audio(this.listener);
+        const audioLoader = new THREE.AudioLoader();
+        audioLoader.load('music/bgm.m4a', (buffer) => {
+            this.bgm.setBuffer(buffer);
+            this.bgm.setLoop(true);
+            this.bgm.setVolume(0.1);
+        });
+
         // define light
         const dirLight = new THREE.DirectionalLight('#ffffff', 1);
         dirLight.position.set(5, 5, 5);
         this.scene.add(dirLight);
 
         // define light_saber
-        this.lightsaber = new Lightsaber(this.scene, this.camera);
+        this.lightsaber = new Lightsaber(this.scene, this.camera, this.listener);
         this.floor = new Floor(this.scene);
         this.stars = new Stars(this.scene);
 
@@ -49,7 +60,7 @@ export class MainScene {
         // UnrealBloomPass parameters: resolution, strength, radius, threshold
         this.bloomPass = new UnrealBloomPass(
             new THREE.Vector2(window.innerWidth, window.innerHeight),
-            1.5,    // strength - intensity of bloom
+            0.5,    // strength - intensity of bloom
             0.4,    // radius - spread of bloom
             0.1     // threshold - brightness cutoff for bloom
         );
@@ -61,7 +72,7 @@ export class MainScene {
 
     // called from App.js
     render() {
-        this.composer.render();
+        this.composer.render(this.scene, this.camera);
     }
     // called from window(eventlistener)
     onResize() {
@@ -69,5 +80,15 @@ export class MainScene {
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.composer.setSize(window.innerWidth, window.innerHeight);
+    }
+    setMusicEnable(enabled) {
+        if (!this.bgm || !this.bgm.buffer) return;
+        
+        if (enabled) {
+            if (!this.bgm.isPlaying) this.bgm.play();
+            this.bgm.setVolume(0.1);
+        } else {
+            this.bgm.setVolume(0.0);
+        }
     }
 }
