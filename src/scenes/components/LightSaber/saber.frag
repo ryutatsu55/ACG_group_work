@@ -82,7 +82,7 @@ void main() {
         float noiseVal = 0.0;
         if (uMode > 0.5) {
             // 時間と位置でノイズを生成
-            noiseVal = snoise(vec2(currentPos.y * 2.0 , currentPos.x * 1.0 + uTime*10.0)) * 0.02;
+            noiseVal = snoise(vec2(currentPos.y * 2.0 , currentPos.x * 1.0 + uTime*10.0)) * 0.01;
         } else {
             // noiseVal = snoise(vec2(currentPos.y, uTime)) * 0.02;
             noiseVal = 0.0;
@@ -95,7 +95,7 @@ void main() {
         // --- 密度の計算 (Density Function) ---
         // 距離が近いほど密度が高い（明るい）。逆二乗の法則のようなカーブ。
         // abs()で負の値対策
-        float density = 0.0005 / (pow(abs(noisyDist), 2.5) + 0.0001) + noiseVal;
+        float density = 0.0003 / (pow(abs(noisyDist), 2.5) + 0.0001) + noiseVal;
         
 
         // 積算 (Additive)
