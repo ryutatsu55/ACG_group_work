@@ -94,7 +94,9 @@ export class UIManager {
         const music_toggle = music_folder.add(this.params, 'music');
         music_toggle.name("music on/off");
         music_toggle.onChange((value) => {
-
+            if (this.scene.setMusicEnable) {
+                this.scene.setMusicEnable(value);
+            }
         });
 
 

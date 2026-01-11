@@ -5,7 +5,7 @@ import vertexShader from './saber.vert';
 import fragmentShader from './saber.frag';
 
 export class Lightsaber {
-  constructor(scene, camera) {
+  constructor(scene, camera, listener) {
     this.container = new THREE.Group();
     scene.add(this.container);
 
@@ -21,6 +21,7 @@ export class Lightsaber {
     this.isOn = null;       // スイッチの状態 (true: ON, false: OFF)
     this.currentScale = 0.0; // 現在の長さ (0.0 ~ 1.0)
     this.camera = camera;
+    this.listener = listener;
 
     this.soundController = null;
 
@@ -35,7 +36,7 @@ export class Lightsaber {
     this.handle.position.y = -0.5;
     this.container.add(this.handle);
 
-    this.soundController = new SoundController(this.camera, this.handle);
+    this.soundController = new SoundController(this.listener, this.handle);
 
     // 2. 刃 (Blade) - ShaderMaterialを使用
     // const bladeGeo = new THREE.CylinderGeometry(0.1, 0.1, 4.0, 16);
@@ -53,7 +54,7 @@ export class Lightsaber {
       transparent: true,
       side: THREE.DoubleSide,
       blending: THREE.NormalBlending,
-      depthWrite: false
+      depthWrite: true
     });
 
     this.blade = new THREE.Mesh(bladeGeo, this.bladeMat);

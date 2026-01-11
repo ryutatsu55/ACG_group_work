@@ -95,7 +95,7 @@ void main() {
         // --- 密度の計算 (Density Function) ---
         // 距離が近いほど密度が高い（明るい）。逆二乗の法則のようなカーブ。
         // abs()で負の値対策
-        float density = 0.0002 / (pow(abs(noisyDist), 2.5) + 0.0001) + noiseVal;
+        float density = 0.0005 / (pow(abs(noisyDist), 2.5) + 0.0001) + noiseVal;
         
 
         // 積算 (Additive)

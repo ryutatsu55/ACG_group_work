@@ -19,7 +19,7 @@ export class Floor {
         const material = new THREE.ShaderMaterial({
             vertexShader: vertexShader,
             fragmentShader: fragmentShader,
-            transparent: true,
+            transparent: false,
             side: THREE.FrontSide,
             depthWrite: true,
             uniforms: {
