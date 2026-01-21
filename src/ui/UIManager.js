@@ -3,7 +3,7 @@ import GUI from 'lil-gui';
 export class UIManager {
     constructor(sceneSystem, physicsSystem) {
         this.gui = new GUI();
-        
+
         // receive from App.js
         this.scene = sceneSystem;
         this.physics = physicsSystem;
@@ -72,7 +72,7 @@ export class UIManager {
         saber_mode.onChange((value) => {
             this.scene.lightsaber.setMode(value)
         });
-        
+
         saber_folder.addColor(this.params, 'color').onChange((value) => {
             this.scene.lightsaber.setColor(value);
         });
@@ -87,15 +87,15 @@ export class UIManager {
         const handleFolder = this.gui.addFolder('Handle Material');
 
         handleFolder.add(this.params, 'metalness', 0.0, 1.0).name('Metalness').onChange((value) => {
-            if(this.scene.lightsaber) this.scene.lightsaber.setMetalness(value);
+            if (this.scene.lightsaber) this.scene.lightsaber.setMetalness(value);
         });
 
         handleFolder.add(this.params, 'roughness', 0.04, 1.0).name('Roughness').onChange((value) => {
-            if(this.scene.lightsaber) this.scene.lightsaber.setRoughness(value);
+            if (this.scene.lightsaber) this.scene.lightsaber.setRoughness(value);
         });
 
         handleFolder.addColor(this.params, 'handleColor').name('Handle Color').onChange((value) => {
-            if(this.scene.lightsaber) this.scene.lightsaber.setHandleColor(value);
+            if (this.scene.lightsaber) this.scene.lightsaber.setHandleColor(value);
         });
 
 
@@ -117,7 +117,7 @@ export class UIManager {
 
         const render_folder = this.gui.addFolder('rendering Settings');
 
-        const algorithm_options = ["A", "B"];
+        const algorithm_options = ["A", "B", "C"];
         const algorithm_select = render_folder.add(this.params, 'algorithm', algorithm_options);
         algorithm_select.name("algorithm");
         algorithm_select.onChange((value) => {
