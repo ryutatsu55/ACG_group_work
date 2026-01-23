@@ -1,14 +1,22 @@
-// Handle Fragment Shader - Metallic PBR with Blade Light Reflection
-// GLSL 3.0 ES (Three.js GLSL3 mode)
+// Disney BRDF Fragment Shader for Handle
+// Based on Disney's Principled BRDF (Burley 2012)
+// Adapted for Three.js GLSL3 with blade light integration
 
 precision highp float;
 
-#define PI 3.14159265359
+#define PI 3.14159265358979323846
 
-// Material properties
+
+// Disney BRDF Uniforms (Simplified Set)
+
 uniform vec3 uBaseColor;
-uniform float uMetalness;
+uniform float uMetallic;
 uniform float uRoughness;
+uniform float uClearcoat;
+uniform float uClearcoatGloss;
+uniform float uSheen;
+uniform float uSheenTint;
+uniform float uSubsurface;
 
 // Blade light properties
 uniform vec3 uBladeColor;
@@ -20,6 +28,7 @@ uniform vec3 uBladeBaseWorld;
 uniform vec3 uAmbientColor;
 uniform float uAmbientIntensity;
 
+// Varyings from vertex shader
 in vec3 vWorldPosition;
 in vec3 vWorldNormal;
 in vec3 vViewDirection;
@@ -28,186 +37,176 @@ in vec3 vLocalPosition;
 
 out vec4 fragColor;
 
-// ============================================
-// PBR Helper Functions
-// ============================================
 
-// Fresnel-Schlick approximation
-vec3 fresnelSchlick(float cosTheta, vec3 F0) {
-    return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+// Disney BRDF Helper Functions
+
+
+float sqr(float x) { return x * x; }
+
+float SchlickFresnel(float u) {
+    float m = clamp(1.0 - u, 0.0, 1.0);
+    float m2 = m * m;
+    return m2 * m2 * m; // pow(m, 5)
 }
 
-// Fresnel-Schlick with roughness for ambient
-vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness) {
-    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
-}
-
-// GGX/Trowbridge-Reitz Normal Distribution Function
-float distributionGGX(vec3 N, vec3 H, float roughness) {
-    float a = roughness * roughness;
+// GTR1: Used for clearcoat (Berry distribution)
+float GTR1(float NdotH, float a) {
+    if (a >= 1.0) return 1.0 / PI;
     float a2 = a * a;
-    float NdotH = max(dot(N, H), 0.0);
-    float NdotH2 = NdotH * NdotH;
-
-    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
-    denom = PI * denom * denom;
-
-    return a2 / denom;
+    float t = 1.0 + (a2 - 1.0) * NdotH * NdotH;
+    return (a2 - 1.0) / (PI * log(a2) * t);
 }
 
-// Schlick-GGX Geometry Function
-float geometrySchlickGGX(float NdotV, float roughness) {
-    float r = (roughness + 1.0);
-    float k = (r * r) / 8.0;
-
-    float denom = NdotV * (1.0 - k) + k;
-    return NdotV / denom;
+// GTR2: GGX/Trowbridge-Reitz for specular
+float GTR2(float NdotH, float a) {
+    float a2 = a * a;
+    float t = 1.0 + (a2 - 1.0) * NdotH * NdotH;
+    return a2 / (PI * t * t);
 }
 
-// Smith's Geometry Function
-float geometrySmith(vec3 N, vec3 V, vec3 L, float roughness) {
-    float NdotV = max(dot(N, V), 0.0);
-    float NdotL = max(dot(N, L), 0.0);
-    float ggx2 = geometrySchlickGGX(NdotV, roughness);
-    float ggx1 = geometrySchlickGGX(NdotL, roughness);
-
-    return ggx1 * ggx2;
+// Smith GGX geometry term
+float smithG_GGX(float NdotV, float alphaG) {
+    float a = alphaG * alphaG;
+    float b = NdotV * NdotV;
+    return 1.0 / (NdotV + sqrt(a + b - a * b));
 }
 
-// ============================================
+// sRGB to linear conversion
+vec3 mon2lin(vec3 x) {
+    return vec3(pow(x.r, 2.2), pow(x.g, 2.2), pow(x.b, 2.2));
+}
+
+// Linear to sRGB conversion
+vec3 lin2mon(vec3 x) {
+    return vec3(pow(x.r, 1.0/2.2), pow(x.g, 1.0/2.2), pow(x.b, 1.0/2.2));
+}
+
+
+// Disney BRDF Main Function
+
+
+vec3 DisneyBRDF(vec3 L, vec3 V, vec3 N, vec3 baseColor) {
+    float NdotL = dot(N, L);
+    float NdotV = dot(N, V);
+    
+    if (NdotL < 0.0 || NdotV < 0.0) return vec3(0.0);
+
+    vec3 H = normalize(L + V);
+    float NdotH = dot(N, H);
+    float LdotH = dot(L, H);
+
+    vec3 Cdlin = mon2lin(baseColor);
+    float Cdlum = 0.3 * Cdlin.r + 0.6 * Cdlin.g + 0.1 * Cdlin.b;
+
+    vec3 Ctint = Cdlum > 0.0 ? Cdlin / Cdlum : vec3(1.0);
+    vec3 Cspec0 = mix(0.08 * mix(vec3(1.0), Ctint, 0.0), Cdlin, uMetallic);
+    vec3 Csheen = mix(vec3(1.0), Ctint, uSheenTint);
+
+    // Diffuse fresnel
+    float FL = SchlickFresnel(NdotL);
+    float FV = SchlickFresnel(NdotV);
+    float Fd90 = 0.5 + 2.0 * LdotH * LdotH * uRoughness;
+    float Fd = mix(1.0, Fd90, FL) * mix(1.0, Fd90, FV);
+
+    // Subsurface approximation
+    float Fss90 = LdotH * LdotH * uRoughness;
+    float Fss = mix(1.0, Fss90, FL) * mix(1.0, Fss90, FV);
+    float ss = 1.25 * (Fss * (1.0 / (NdotL + NdotV) - 0.5) + 0.5);
+
+    // Specular (isotropic GGX)
+    float a = max(0.001, sqr(uRoughness));
+    float Ds = GTR2(NdotH, a);
+    float FH = SchlickFresnel(LdotH);
+    vec3 Fs = mix(Cspec0, vec3(1.0), FH);
+    float Gs = smithG_GGX(NdotL, a) * smithG_GGX(NdotV, a);
+
+    // Sheen
+    vec3 Fsheen = FH * uSheen * Csheen;
+
+    // Clearcoat (ior = 1.5 -> F0 = 0.04)
+    float Dr = GTR1(NdotH, mix(0.1, 0.001, uClearcoatGloss));
+    float Fr = mix(0.04, 1.0, FH);
+    float Gr = smithG_GGX(NdotL, 0.25) * smithG_GGX(NdotV, 0.25);
+
+    // Combine all components
+    vec3 diffuse = (1.0 / PI) * mix(Fd, ss, uSubsurface) * Cdlin;
+    vec3 specular = Gs * Fs * Ds;
+    vec3 clearcoat = vec3(0.25 * uClearcoat * Gr * Fr * Dr);
+    
+    return (diffuse + Fsheen) * (1.0 - uMetallic) + specular + clearcoat;
+}
+
 // Blade Light Calculation
-// ============================================
 
-// Calculate closest point on blade line segment to surface point
+
 vec3 closestPointOnBlade(vec3 p) {
     vec3 ba = uBladeTipWorld - uBladeBaseWorld;
     float t = clamp(dot(p - uBladeBaseWorld, ba) / dot(ba, ba), 0.0, 1.0);
     return uBladeBaseWorld + t * ba;
 }
 
-// Calculate blade light contribution at a point
-vec3 calculateBladeLight(vec3 worldPos, vec3 N, vec3 V, vec3 albedo, float metalness, float roughness) {
-    // Find closest point on blade to this surface point
+vec3 calculateBladeLight(vec3 worldPos, vec3 N, vec3 V) {
     vec3 closestPoint = closestPointOnBlade(worldPos);
     vec3 L = normalize(closestPoint - worldPos);
-    vec3 H = normalize(V + L);
-
     float dist = length(closestPoint - worldPos);
 
     // Attenuation with quadratic falloff
     float attenuation = 1.0 / (1.0 + dist * dist * 0.8);
     attenuation *= uBladeIntensity;
 
-    // Skip if too far or blade is off
-    if (attenuation < 0.001) {
-        return vec3(0.0);
-    }
+    if (attenuation < 0.001) return vec3(0.0);
 
-    // PBR calculations
-    float NdotL = max(dot(N, L), 0.0);
-    float NdotV = max(dot(N, V), 0.0);
-
-    // F0: reflectance at normal incidence
-    vec3 F0 = mix(vec3(0.04), albedo, metalness);
-
-    // Cook-Torrance BRDF
-    float D = distributionGGX(N, H, roughness);
-    float G = geometrySmith(N, V, L, roughness);
-    vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
-
-    // Specular and diffuse components
-    vec3 numerator = D * G * F;
-    float denominator = 4.0 * NdotV * NdotL + 0.0001;
-    vec3 specular = numerator / denominator;
-
-    vec3 kS = F;
-    vec3 kD = (1.0 - kS) * (1.0 - metalness);
-
+    // Disney BRDF for blade light
+    vec3 brdf = DisneyBRDF(L, V, N, uBaseColor);
+    
     // Radiance from blade
     vec3 radiance = uBladeColor * attenuation * 2.0;
+    float NdotL = max(dot(N, L), 0.0);
 
-    // Final contribution
-    return (kD * albedo / PI + specular) * radiance * NdotL;
+    return brdf * radiance * NdotL;
 }
 
 
-// Anisotropic Highlights (Brushed Metal Effect)
-
-float anisotropicHighlight(vec3 N, vec3 V, vec3 L, vec3 tangent, float roughnessX, float roughnessY) {
-    vec3 H = normalize(V + L);
-    vec3 bitangent = normalize(cross(N, tangent));
-
-    float HdotT = dot(H, tangent);
-    float HdotB = dot(H, bitangent);
-    float NdotH = max(dot(N, H), 0.0);
-
-    float ax = roughnessX * roughnessX;
-    float ay = roughnessY * roughnessY;
-
-    float exponent = (HdotT * HdotT / ax + HdotB * HdotB / ay) / max(NdotH * NdotH, 0.001);
-    return exp(-exponent) / (PI * ax * ay);
-}
-
-// Main Rendering
+// Main
 
 void main() {
     vec3 N = normalize(vWorldNormal);
     vec3 V = normalize(vViewDirection);
 
-    // Material properties
-    vec3 albedo = uBaseColor;
-    float metalness = uMetalness;
-    float roughness = max(uRoughness, 0.04); // Prevent division by zero
+    // Blade light contribution (main and only direct light source)
+    vec3 bladeContribution = calculateBladeLight(vWorldPosition, N, V);
 
-    // F0 for ambient
-    vec3 F0 = mix(vec3(0.04), albedo, metalness);
-
-    // Blade Light Contribution
-    vec3 bladeContribution = calculateBladeLight(vWorldPosition, N, V, albedo, metalness, roughness);
-
-    // Ambient Light (simple IBL approximation)
+    // Ambient contribution (very dim base illumination)
+    vec3 Cdlin = mon2lin(uBaseColor);
     float NdotV = max(dot(N, V), 0.0);
-    vec3 F = fresnelSchlickRoughness(NdotV, F0, roughness);
-
-    vec3 kS = F;
-    vec3 kD = (1.0 - kS) * (1.0 - metalness);
-
-    // Ambient diffuse
+    
     vec3 ambient = uAmbientColor * uAmbientIntensity;
-    vec3 diffuse = kD * albedo * ambient;
+    vec3 kD = (1.0 - uMetallic) * Cdlin;
+    vec3 ambientContribution = kD * ambient;
 
-    // Ambient specular (simplified)
-    vec3 specularAmbient = F * ambient * 0.3;
+    // Clearcoat reflection from blade (when blade is on)
+    float FV = SchlickFresnel(NdotV);
+    float clearcoatFromBlade = uClearcoat * FV * uBladeIntensity * 0.3;
+    ambientContribution += uBladeColor * clearcoatFromBlade;
 
-    vec3 ambientContribution = diffuse + specularAmbient;
+    // Sheen edge glow from blade light
+    vec3 Ctint = Cdlin / max(0.3 * Cdlin.r + 0.6 * Cdlin.g + 0.1 * Cdlin.b, 0.001);
+    vec3 Csheen = mix(vec3(1.0), Ctint, uSheenTint);
+    vec3 sheenFromBlade = uSheen * FV * Csheen * uBladeColor * uBladeIntensity * 0.2;
+    ambientContribution += sheenFromBlade * (1.0 - uMetallic);
 
-    // Anisotropic Highlight (Brushed Metal)
-    // Tangent along the cylinder axis (vertical)
-    vec3 tangent = normalize(vec3(0.0, 1.0, 0.0));
-
-    // Find closest blade light direction for anisotropic highlight
-    vec3 closestBlade = closestPointOnBlade(vWorldPosition);
-    vec3 L = normalize(closestBlade - vWorldPosition);
-
-    float aniso = anisotropicHighlight(N, V, L, tangent, roughness * 0.5, roughness * 2.0);
-    vec3 anisoHighlight = uBladeColor * aniso * uBladeIntensity * 0.15;
-
-    // Rim Lighting (Fresnel Edge Glow)
+    // Rim lighting from blade (Fresnel edge glow)
     float fresnel = pow(1.0 - NdotV, 4.0);
     vec3 rimLight = uBladeColor * fresnel * uBladeIntensity * 0.2;
 
-    // Final Color Composition
-    vec3 finalColor = vec3(0.0);
-    finalColor += ambientContribution;
-    finalColor += bladeContribution;
-    finalColor += anisoHighlight;
-    finalColor += rimLight;
+    // Final composition
+    vec3 finalColor = ambientContribution + bladeContribution + rimLight;
 
-    // Tone mapping (simple Reinhard)
+    // Tone mapping (Reinhard)
     finalColor = finalColor / (finalColor + vec3(1.0));
 
     // Gamma correction
-    finalColor = pow(finalColor, vec3(1.0 / 2.2));
+    finalColor = lin2mon(finalColor);
 
     fragColor = vec4(finalColor, 1.0);
 }

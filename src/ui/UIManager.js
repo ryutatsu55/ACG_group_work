@@ -27,9 +27,14 @@ export class UIManager {
             sound: false,
             music: false,
             algorithm: "A",
-            // ★追加: Handle material settings
-            metalness: 0.9,
+            // Disney BRDF Handle material settings
+            metallic: 0.9,
             roughness: 0.3,
+            clearcoat: 0.0,
+            clearcoatGloss: 1.0,
+            sheen: 0.0,
+            sheenTint: 0.5,
+            subsurface: 0.0,
             handleColor: '#666666'
         };
 
@@ -83,18 +88,38 @@ export class UIManager {
             this.physics.setInertia(value)
         });
 
-        // ★追加: Handle Material Settings
-        const handleFolder = this.gui.addFolder('Handle Material');
+        // Disney BRDF Handle Material Settings
+        const handleFolder = this.gui.addFolder('Handle Material (Disney BRDF)');
 
-        handleFolder.add(this.params, 'metalness', 0.0, 1.0).name('Metalness').onChange((value) => {
-            if (this.scene.lightsaber) this.scene.lightsaber.setMetalness(value);
+        handleFolder.add(this.params, 'metallic', 0.0, 1.0).name('Metallic').onChange((value) => {
+            if (this.scene.lightsaber) this.scene.lightsaber.setMetallic(value);
         });
 
         handleFolder.add(this.params, 'roughness', 0.04, 1.0).name('Roughness').onChange((value) => {
             if (this.scene.lightsaber) this.scene.lightsaber.setRoughness(value);
         });
 
-        handleFolder.addColor(this.params, 'handleColor').name('Handle Color').onChange((value) => {
+        handleFolder.add(this.params, 'clearcoat', 0.0, 1.0).name('Clearcoat').onChange((value) => {
+            if (this.scene.lightsaber) this.scene.lightsaber.setClearcoat(value);
+        });
+
+        handleFolder.add(this.params, 'clearcoatGloss', 0.0, 1.0).name('Clearcoat Gloss').onChange((value) => {
+            if (this.scene.lightsaber) this.scene.lightsaber.setClearcoatGloss(value);
+        });
+
+        handleFolder.add(this.params, 'sheen', 0.0, 1.0).name('Sheen').onChange((value) => {
+            if (this.scene.lightsaber) this.scene.lightsaber.setSheen(value);
+        });
+
+        handleFolder.add(this.params, 'sheenTint', 0.0, 1.0).name('Sheen Tint').onChange((value) => {
+            if (this.scene.lightsaber) this.scene.lightsaber.setSheenTint(value);
+        });
+
+        handleFolder.add(this.params, 'subsurface', 0.0, 1.0).name('Subsurface').onChange((value) => {
+            if (this.scene.lightsaber) this.scene.lightsaber.setSubsurface(value);
+        });
+
+        handleFolder.addColor(this.params, 'handleColor').name('Base Color').onChange((value) => {
             if (this.scene.lightsaber) this.scene.lightsaber.setHandleColor(value);
         });
 

@@ -20,12 +20,17 @@ export class Lightsaber {
 
     this.bladeColor = new THREE.Color('#00ff00');
 
-    // Handle uniforms (PBR metallic)
+    // Handle uniforms (Disney BRDF)
     this.handleUniforms = {
-      // Material properties
+      // Disney BRDF Material properties
       uBaseColor: { value: new THREE.Color('#666666') },
-      uMetalness: { value: 0.9 },
+      uMetallic: { value: 0.9 },
       uRoughness: { value: 0.3 },
+      uClearcoat: { value: 0.0 },
+      uClearcoatGloss: { value: 1.0 },
+      uSheen: { value: 0.0 },
+      uSheenTint: { value: 0.5 },
+      uSubsurface: { value: 0.0 },
       // Blade light properties
       uBladeColor: { value: new THREE.Color('#00ff00') },
       uBladeIntensity: { value: 0.0 },
@@ -300,12 +305,27 @@ export class Lightsaber {
     this.uniforms.uMode.value = mode;
   }
 
-  // Handle Material Controls
-  setMetalness(value) {
-    this.handleUniforms.uMetalness.value = value;
+  // Handle Material Controls (Disney BRDF)
+  setMetallic(value) {
+    this.handleUniforms.uMetallic.value = value;
   }
   setRoughness(value) {
     this.handleUniforms.uRoughness.value = value;
+  }
+  setClearcoat(value) {
+    this.handleUniforms.uClearcoat.value = value;
+  }
+  setClearcoatGloss(value) {
+    this.handleUniforms.uClearcoatGloss.value = value;
+  }
+  setSheen(value) {
+    this.handleUniforms.uSheen.value = value;
+  }
+  setSheenTint(value) {
+    this.handleUniforms.uSheenTint.value = value;
+  }
+  setSubsurface(value) {
+    this.handleUniforms.uSubsurface.value = value;
   }
   setHandleColor(hex) {
     this.handleUniforms.uBaseColor.value.set(hex);
