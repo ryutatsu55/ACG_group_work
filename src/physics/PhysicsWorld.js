@@ -41,32 +41,35 @@ export class PhysicsWorld {
     }
 
     // called from App.js for every frame
-    update() {
+    update(dt) {
+        // Normalize dt to 60fps baseline (1/60 ≈ 0.0167)
+        const dtNorm = dt / 0.0167;
+
         // rough angle
         const radius = Math.max(Math.pow(this.mouse.x, 2), Math.pow(this.mouse.y, 2));
         const targetPosX = this.mouse.x * 7.0 * this.sense;
         const targetPosY = this.mouse.y * 5.0 * this.sense;
         const targetPosZ = -3.0 * (1.0 - radius);
         const targetRotZ = -this.mouse.x * Math.PI * this.sense;
-        const targetRotX = -Math.PI/3 + this.mouse.y * Math.PI * this.sense;
+        const targetRotX = -Math.PI / 3 + this.mouse.y * Math.PI * this.sense;
 
-        // simple inertia
-        this.saberState.posX += (targetPosX - this.saberState.posX) * (1/(20*this.inertia));
-        this.saberState.posY += (targetPosY - this.saberState.posY) * (1/(20*this.inertia));
-        this.saberState.posZ += (targetPosZ - this.saberState.posZ) * (1/(20*this.inertia));
-        this.saberState.rotZ += (targetRotZ - this.saberState.rotZ) * (1/(20*this.inertia));
-        this.saberState.rotX += (targetRotX - this.saberState.rotX) * (1/(20*this.inertia));
+        // Framerate-independent inertia using exponential smoothing
+        // Higher inertia = slower response, base smoothing factor adjusted by dt
+        const smoothingFactor = 1.0 - Math.exp(-dtNorm / (20 * this.inertia));
 
-        // calc speed vec
-        // const dist = Math.sqrt(
-        // Math.pow(this.mouse.x - this.prevMouse.x, 2) + 
-        // Math.pow(this.mouse.y - this.prevMouse.y, 2)
-        // );
+        this.saberState.posX += (targetPosX - this.saberState.posX) * smoothingFactor;
+        this.saberState.posY += (targetPosY - this.saberState.posY) * smoothingFactor;
+        this.saberState.posZ += (targetPosZ - this.saberState.posZ) * smoothingFactor;
+        this.saberState.rotZ += (targetRotZ - this.saberState.rotZ) * smoothingFactor;
+        this.saberState.rotX += (targetRotX - this.saberState.rotX) * smoothingFactor;
+
+        // calc speed vec (normalized by dt for consistent speed measurement)
         const dist = Math.sqrt(
-        Math.pow(this.saberState.posX - this.prevPos.x, 2) + 
-        Math.pow(this.saberState.posY - this.prevPos.y, 2)
+            Math.pow(this.saberState.posX - this.prevPos.x, 2) +
+            Math.pow(this.saberState.posY - this.prevPos.y, 2)
         );
-        this.saberState.swingSpeed = dist * 100.0;
+        // Normalize speed by dt to get velocity (distance per second)
+        this.saberState.swingSpeed = (dt > 0) ? dist / dt : 0;
 
         // save previous pos for next calc
         this.prevPos.x = this.saberState.posX;

@@ -18,7 +18,7 @@ export class App {
     // this.physicsSystem.onClick = () => {
     //   this.sceneSystem.lightsaber.toggle();
     // };
-    
+
     this.uiSystem = new UIManager(this.sceneSystem, this.physicsSystem);
 
     // roop start
@@ -34,7 +34,7 @@ export class App {
     // A. 物理計算を実行 (Physics)
     // calc some physical data like pos, angle, speed etc...
     // decide how the objects will behave, move or illuminate based on input like mouse
-    this.physicsSystem.update();
+    this.physicsSystem.update(dt);
     const physicsData = this.physicsSystem.getSaberState();
 
     // B. 計算結果を見た目に反映 (Physics -> Scene)
