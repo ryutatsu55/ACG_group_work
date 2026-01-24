@@ -83,12 +83,26 @@ export class MainScene {
     }
     setMusicEnable(enabled) {
         if (!this.bgm || !this.bgm.buffer) return;
-        
+
         if (enabled) {
             if (!this.bgm.isPlaying) this.bgm.play();
             this.bgm.setVolume(0.1);
         } else {
             this.bgm.setVolume(0.0);
         }
+    }
+
+    // Bloom controls
+    setBloomStrength(value) {
+        if (this.bloomPass) this.bloomPass.strength = value;
+    }
+    setBloomRadius(value) {
+        if (this.bloomPass) this.bloomPass.radius = value;
+    }
+    setBloomThreshold(value) {
+        if (this.bloomPass) this.bloomPass.threshold = value;
+    }
+    setExposure(value) {
+        if (this.renderer) this.renderer.toneMappingExposure = value;
     }
 }

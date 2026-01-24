@@ -35,7 +35,12 @@ export class UIManager {
             sheen: 0.0,
             sheenTint: 0.5,
             subsurface: 0.0,
-            handleColor: '#666666'
+            handleColor: '#666666',
+            // Bloom / Post-processing
+            bloomStrength: 0.5,
+            bloomRadius: 0.4,
+            bloomThreshold: 0.1,
+            exposure: 1.0
         };
 
         // 初期化時の反映
@@ -140,15 +145,34 @@ export class UIManager {
         });
 
 
-        const render_folder = this.gui.addFolder('rendering Settings');
+        const render_folder = this.gui.addFolder('Rendering Settings');
 
         const algorithm_options = ["A", "B", "C"];
         const algorithm_select = render_folder.add(this.params, 'algorithm', algorithm_options);
-        algorithm_select.name("algorithm");
+        algorithm_select.name("Algorithm");
         algorithm_select.onChange((value) => {
             if (this.scene.lightsaber) {
                 this.scene.lightsaber.setAlgorithm(value);
             }
+        });
+
+        // Post-Processing / Bloom Controls
+        const bloomFolder = this.gui.addFolder('Post-Processing (Bloom)');
+
+        bloomFolder.add(this.params, 'bloomStrength', 0.0, 3.0).name('Bloom Strength').onChange((value) => {
+            if (this.scene.setBloomStrength) this.scene.setBloomStrength(value);
+        });
+
+        bloomFolder.add(this.params, 'bloomRadius', 0.0, 2.0).name('Bloom Radius').onChange((value) => {
+            if (this.scene.setBloomRadius) this.scene.setBloomRadius(value);
+        });
+
+        bloomFolder.add(this.params, 'bloomThreshold', 0.0, 1.0).name('Bloom Threshold').onChange((value) => {
+            if (this.scene.setBloomThreshold) this.scene.setBloomThreshold(value);
+        });
+
+        bloomFolder.add(this.params, 'exposure', 0.1, 3.0).name('Exposure').onChange((value) => {
+            if (this.scene.setExposure) this.scene.setExposure(value);
         });
     }
 
