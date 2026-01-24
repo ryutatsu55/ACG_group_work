@@ -145,16 +145,6 @@ export class Lightsaber {
     this.bladeB = new THREE.Mesh(bladeGeo, this.bladeMatB);
     this.container.add(this.bladeB);
     this.bladeB.visible = false;
-
-    // PointLight attached to blade
-    this.bladeLightB = new THREE.PointLight(
-      this.bladeColor,
-      150,    // intensity
-      50,     // distance
-      2       // decay
-    );
-    this.bladeLightB.position.y = bladeHeight / 2;
-    this.bladeB.add(this.bladeLightB);
   }
 
   _createBladeC() {
@@ -242,9 +232,6 @@ export class Lightsaber {
 
     if (this.bladeB) {
       this.bladeB.visible = (this.algorithm === "B" && isVisibleSize);
-      if (this.bladeLightB) {
-        this.bladeLightB.visible = this.bladeB.visible;
-      }
     }
 
     // Algorithm C: core + glow + light
@@ -386,7 +373,6 @@ export class Lightsaber {
         + flickerAmount * 0.17 * Math.sin(time * 113.0); // High frequency shimmer
 
       const baseIntensity = this.currentScale * flicker;
-      if (this.bladeLightB) this.bladeLightB.intensity = 150 * baseIntensity;
       if (this.bladeMatB) this.bladeMatB.emissiveIntensity = 5.0 * baseIntensity;
     }
 
