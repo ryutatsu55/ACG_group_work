@@ -42,7 +42,10 @@ export class UIManager {
             bloomStrength: 0.5,
             bloomRadius: 0.4,
             bloomThreshold: 0.1,
-            exposure: 1.0
+            exposure: 1.0,
+            // Floor lighting
+            floorAttenuation: 0.1,
+            floorMaxDist: 15.0
         };
 
         // 初期化時の反映
@@ -178,6 +181,21 @@ export class UIManager {
 
         bloomFolder.add(this.params, 'exposure', 0.1, 3.0).name('Exposure').onChange((value) => {
             if (this.scene.setExposure) this.scene.setExposure(value);
+        });
+
+        // Floor Lighting Controls
+        const floorFolder = this.gui.addFolder('Floor Lighting');
+
+        floorFolder.add(this.params, 'floorAttenuation', 0.001, 1.0).name('Attenuation').onChange((value) => {
+            if (this.scene.floor && this.scene.floor.setAttenuation) {
+                this.scene.floor.setAttenuation(value);
+            }
+        });
+
+        floorFolder.add(this.params, 'floorMaxDist', 5.0, 500.0).name('Max Distance').onChange((value) => {
+            if (this.scene.floor && this.scene.floor.setMaxDist) {
+                this.scene.floor.setMaxDist(value);
+            }
         });
     }
 

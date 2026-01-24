@@ -38,7 +38,7 @@ export class Lightsaber {
       uBladeBaseWorld: { value: new THREE.Vector3(0, 0, 0) },
       // Scene lighting
       uAmbientColor: { value: new THREE.Color('#ffffff') },
-      uAmbientIntensity: { value: 0.15 }
+      uAmbientIntensity: { value: 0.30 }
     };
 
     // Flickering intensity (0 = off, 1 = full)

@@ -44,6 +44,13 @@ export class App {
     saber.setPosition(physicsData.posX, physicsData.posY, physicsData.posZ);
     saber.setSpeed(physicsData.swingSpeed);
     saber.update(dt);
+
+    // Update floor lighting from lightsaber
+    const floor = this.sceneSystem.floor;
+    if (floor && floor.updateFromLightsaber) {
+      floor.updateFromLightsaber(saber);
+    }
+
     const stars = this.sceneSystem.stars;
     stars.update();
 
