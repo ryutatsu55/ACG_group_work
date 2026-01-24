@@ -6,6 +6,7 @@ uniform vec3 uColor;
 uniform float uTime;
 uniform float uMode;
 uniform vec3 uCameraPosLocal;
+uniform float uFlickerIntensity;
 
 in vec3 vLocalPosition;
 in vec2 vUv;
@@ -118,7 +119,14 @@ void main() {
     alpha *= verticalFade;
     // alpha = 1.0;
 
-    fragColor = vec4(finalColor * verticalFade, alpha);
+    // Flickering effect
+    float flickerAmount = uFlickerIntensity * 0.08;
+    float flicker = 1.0 
+        + flickerAmount * 0.5 * sin(uTime * 30.0)
+        + flickerAmount * 0.33 * sin(uTime * 47.0)
+        + flickerAmount * 0.17 * sin(uTime * 113.0);
+
+    fragColor = vec4(finalColor * verticalFade * flicker, alpha);
 }
 
 // void main() {

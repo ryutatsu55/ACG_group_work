@@ -36,6 +36,8 @@ export class UIManager {
             sheenTint: 0.5,
             subsurface: 0.0,
             handleColor: '#666666',
+            // Flickering
+            flickerIntensity: 0.5,
             // Bloom / Post-processing
             bloomStrength: 0.5,
             bloomRadius: 0.4,
@@ -91,6 +93,9 @@ export class UIManager {
         });
         saber_folder.add(this.params, 'inertia', 0.1, 1.0).onChange((value) => {
             this.physics.setInertia(value)
+        });
+        saber_folder.add(this.params, 'flickerIntensity', 0.0, 1.0).name('Flicker Intensity').onChange((value) => {
+            if (this.scene.lightsaber) this.scene.lightsaber.setFlickerIntensity(value);
         });
 
         // Disney BRDF Handle Material Settings

@@ -41,13 +41,17 @@ export class Lightsaber {
       uAmbientIntensity: { value: 0.15 }
     };
 
+    // Flickering intensity (0 = off, 1 = full)
+    this.flickerIntensity = 0.5;
+
     // Legacy uniform reference (for Shader Blade A)
     this.bladeUniforms = {
       uColor: { value: this.bladeColor },
       uSwingSpeed: { value: 0.0 },
       uMode: { value: 1.0 },
       uTime: { value: 0.0 },
-      uCameraPosLocal: { value: new THREE.Vector3() }
+      uCameraPosLocal: { value: new THREE.Vector3() },
+      uFlickerIntensity: { value: this.flickerIntensity }
     };
     // Algorithm A が参照する uniforms
     this.uniforms = this.bladeUniforms;
@@ -157,7 +161,7 @@ export class Lightsaber {
     const bladeHeight = 4.0;
 
     // Thin Opaque Core (inner solid blade)
-    const coreRadius = 0.05;
+    const coreRadius = 0.08;  // Slightly smaller than glowRadius (0.12)
     const coreLength = bladeHeight * 0.9 - 2 * coreRadius;
     const coreGeo = new THREE.CapsuleGeometry(coreRadius, coreLength, 4, 16);
     coreGeo.translate(0, (bladeHeight * 0.9) / 2, 0);  // Center the shorter core
@@ -188,7 +192,8 @@ export class Lightsaber {
         uSwingSpeed: { value: 0.0 },
         uMode: { value: 1.0 },
         uTime: { value: 0.0 },
-        uCameraPosLocal: { value: new THREE.Vector3() }
+        uCameraPosLocal: { value: new THREE.Vector3() },
+        uFlickerIntensity: { value: this.flickerIntensity }
       },
       glslVersion: THREE.GLSL3,
       transparent: true,
@@ -331,6 +336,14 @@ export class Lightsaber {
     this.handleUniforms.uBaseColor.value.set(hex);
   }
 
+  // Flicker intensity control (0 = off, 1 = full)
+  setFlickerIntensity(value) {
+    this.flickerIntensity = value;
+    // Update shader uniforms
+    if (this.bladeUniforms) this.bladeUniforms.uFlickerIntensity.value = value;
+    if (this.bladeCGlowMat) this.bladeCGlowMat.uniforms.uFlickerIntensity.value = value;
+  }
+
   // ■ 外部から呼ばれる更新メソッド
   toggle(value) {
     this.isOn = value;
@@ -360,12 +373,21 @@ export class Lightsaber {
       this.bladeUniforms.uCameraPosLocal.value.applyMatrix4(inverseMatrix);
     }
 
-    // B (Standard)
+    // B (Standard) with flickering effect
     if (this.bladeB) {
       this.bladeB.scale.y = this.currentScale;
-      // ライトの強さ連動
-      if (this.bladeLightB) this.bladeLightB.intensity = 150 * this.currentScale;
-      if (this.bladeMatB) this.bladeMatB.emissiveIntensity = 5.0 * this.currentScale;
+
+      // Flickering effect: combine multiple frequencies for natural look
+      const time = this.uniforms.uTime.value;
+      const flickerAmount = this.flickerIntensity * 0.06; // Max ±6% variation
+      const flicker = 1.0
+        + flickerAmount * 0.5 * Math.sin(time * 30.0)   // Fast subtle flicker
+        + flickerAmount * 0.33 * Math.sin(time * 47.0)  // Async frequency
+        + flickerAmount * 0.17 * Math.sin(time * 113.0); // High frequency shimmer
+
+      const baseIntensity = this.currentScale * flicker;
+      if (this.bladeLightB) this.bladeLightB.intensity = 150 * baseIntensity;
+      if (this.bladeMatB) this.bladeMatB.emissiveIntensity = 5.0 * baseIntensity;
     }
 
     // C (Hybrid: Core + Glow + Light)
