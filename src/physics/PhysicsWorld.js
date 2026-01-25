@@ -21,6 +21,8 @@ export class PhysicsWorld {
 
         this.onClick = null;
 
+        this.movementEnabled = true;
+
         this.setupInput();
     }
 
@@ -40,8 +42,19 @@ export class PhysicsWorld {
         // });
     }
 
+    setMovementEnabled(enabled) {
+        this.movementEnabled = enabled;
+    }
+
+
     // called from App.js for every frame
     update(dt) {
+
+        if (!this.movementEnabled) {
+            // Freeze motion, but keep previous state
+            this.saberState.swingSpeed = 0;
+            return;
+        }
         // Normalize dt to 60fps baseline (1/60 ≈ 0.0167)
         const dtNorm = dt / 0.0167;
 

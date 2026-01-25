@@ -35,10 +35,13 @@ h1 {
   line-height: 1.1;
 }
 
+h6 {
+  line-height: 0.5;
+}
+
 #app {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
   text-align: center;
 }
 
@@ -61,6 +64,11 @@ h1 {
 
 .read-the-docs {
   color: #888;
+}
+
+.my-panel {
+    font-family: "Inter", system-ui, sans-serif;
+    font-size: 14px;
 }
 
 button {
@@ -94,3 +102,55 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+#ui-panel {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    width: 260px;
+    padding: 12px;
+
+    background: rgba(117, 117, 117, 0.75);
+
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(6px);
+
+    color: #ffffff;
+    font-family: sans-serif;
+    border-radius: 8px;
+    z-index: 1000;
+
+    max-height: calc(100vh - 24px);
+    overflow-y: auto;
+
+    border-radius: 10px;
+    z-index: 1000;
+}
+
+#ui-panel h2,
+#ui-panel h3 {
+    margin-top: 0.5em;
+}
+
+#ui-panel label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+#ui-panel input,
+#ui-panel select {
+    width: 120px;
+}
+
+#ui-panel input[type="checkbox"] {
+    accent-color: #4cabff; 
+}
+
+#ui-panel input[type="range"] {
+    accent-color: #4cabff;
+}
+
+
