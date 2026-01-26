@@ -69,7 +69,7 @@ void main() {
     // 2. レイマーチングの設定
     vec3 currentPos = vLocalPosition; 
     float stepSize = 0.02; // 1回の移動距離 (細かいほどきれいだが重い)
-    int steps = 15;        // 何回サンプリングするか (多いほどきれい)
+    int steps = 45;        // 何回サンプリングするか (多いほどきれい)
     
     float totalDensity = 0.0; // 光の蓄積量
 
