@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Lightsaber } from './components/LightSaber/Lightsaber.js';
 import { Floor } from './components/Floor/Floor.js';
 import { Stars } from './components/Stars/Stars.js';
+import { ProjectileManager } from './components/Projectiles/ProjectileManager.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
@@ -46,6 +47,7 @@ export class MainScene {
         this.lightsaber = new Lightsaber(this.scene, this.camera, this.listener);
         this.floor = new Floor(this.scene);
         this.stars = new Stars(this.scene);
+        this.projectileManager = new ProjectileManager(this.scene);
 
         // Setup post-processing with bloom
         this._setupPostProcessing();

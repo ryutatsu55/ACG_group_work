@@ -55,6 +55,9 @@ export class App {
     const stars = this.sceneSystem.stars;
     stars.update();
 
+    const projectile = this.sceneSystem.projectileManager;
+    projectile.update(dt)
+
     // C. インジケーター更新 (UI)
     this.uiSystem.updateStatus(physicsData);
 
