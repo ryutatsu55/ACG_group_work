@@ -19,7 +19,7 @@ export class SoundController {
     
     this.isLoaded = false;
     this.isOn = false;
-    this.isEnabled = true;
+    this.isEnabled = false;
 
     this._initSounds();
   }
@@ -39,17 +39,14 @@ export class SoundController {
       // this.toggle(true); 
     });
 
-    // // 2. スイング音 (Swing) - ループするが初期音量は0
-    // this.swingSound = new THREE.PositionalAudio(this.listener);
-    // loader.load('sound/swing1.mp3', (buffer) => {
-    //   this.swingSound.setBuffer(buffer);
-    //   this.swingSound.setLoop(true);
-    //   this.swingSound.setVolume(0.0); // 振るまで聞こえない
-    //   this.swingSound.setRefDistance(1.0);
-    //   this.sourceMesh.add(this.swingSound);
-      
-      
-    // });
+    this.impactSound = new THREE.PositionalAudio(this.listener);
+    loader.load('sound/impact.m4a', (buffer) => {
+      this.impactSound.setBuffer(buffer);
+      this.impactSound.setLoop(false);
+      this.impactSound.setVolume(0.5); // 振るまで聞こえない
+      this.impactSound.setRefDistance(1.0);
+      this.sourceMesh.add(this.impactSound);
+    });
     
     this.onSound = new THREE.PositionalAudio(this.listener);
     loader.load('sound/lightsaber-on.mp3', (buffer) => {
@@ -110,6 +107,27 @@ export class SoundController {
     // ブラウザの自動再生ブロック対策 (再開)
     if (this.listener.context.state === 'suspended') {
       this.listener.context.resume();
+    }
+  }
+
+  playImpact() {
+    if (!this.isLoaded || !this.isEnabled) return;
+
+    if (this.impactSound.isPlaying) {
+      const soundClone = new THREE.PositionalAudio(this.listener);
+      soundClone.setBuffer(this.impactSound.buffer);
+      soundClone.setRefDistance(this.impactSound.getRefDistance());
+      soundClone.setVolume(this.impactSound.getVolume());
+
+      this.impactSound.parent.add(soundClone);
+      soundClone.onEnded = () => {
+        soundClone.parent.remove(soundClone);
+      };
+
+      soundClone.play();
+      
+    } else {
+      this.impactSound.play();
     }
   }
 

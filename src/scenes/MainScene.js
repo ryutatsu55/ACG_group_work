@@ -24,7 +24,7 @@ export class MainScene {
 
         // define camera
         this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-        this.camera.position.set(0, 2, 6);
+        this.camera.position.set(0, 2, 5);
         this.camera.lookAt(0, 1, 0);
 
         this.listener = new THREE.AudioListener();
@@ -43,11 +43,18 @@ export class MainScene {
         dirLight.position.set(5, 5, 5);
         this.scene.add(dirLight);
 
+        
+        this.baseBloomStrength = 0.5;
+        this.currentBloomStrength = this.baseBloomStrength;
+
         // define light_saber
         this.lightsaber = new Lightsaber(this.scene, this.camera, this.listener);
         this.floor = new Floor(this.scene);
         this.stars = new Stars(this.scene);
-        this.projectileManager = new ProjectileManager(this.scene);
+        this.projectileManager = new ProjectileManager(
+            this.scene, 
+            this.triggerBloomFlash.bind(this)
+        );
 
         // Setup post-processing with bloom
         this._setupPostProcessing();
@@ -106,5 +113,22 @@ export class MainScene {
     }
     setExposure(value) {
         if (this.renderer) this.renderer.toneMappingExposure = value;
+    }
+
+    triggerBloomFlash() {
+        this.currentBloomStrength = 4.0;
+        this.bloomPass.strength = this.currentBloomStrength;
+    }
+
+    updateBloom() {
+        if (!this.bloomPass) return;
+        if (this.currentBloomStrength > this.baseBloomStrength) {
+            this.currentBloomStrength = THREE.MathUtils.lerp(
+                this.currentBloomStrength, 
+                this.baseBloomStrength, 
+                0.1
+            );
+            this.bloomPass.strength = this.currentBloomStrength;
+        }
     }
 }

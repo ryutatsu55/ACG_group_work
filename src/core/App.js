@@ -46,6 +46,8 @@ export class App {
     saber.setSpeed(physicsData.swingSpeed);
     saber.update(dt);
 
+    this.sceneSystem.updateBloom()
+
     // Update floor lighting from lightsaber
     const floor = this.sceneSystem.floor;
     if (floor && floor.updateFromLightsaber) {
@@ -56,7 +58,7 @@ export class App {
     stars.update();
 
     const projectile = this.sceneSystem.projectileManager;
-    projectile.update(dt)
+    projectile.update(dt, this.sceneSystem.lightsaber)
 
     // C. インジケーター更新 (UI)
     this.uiSystem.updateStatus(physicsData);

@@ -35,7 +35,7 @@ export class Floor {
         });
 
         this.mesh = new THREE.Mesh(geometry, material);
-        this.mesh.position.y = -4.0; // Same position as before
+        this.mesh.position.y = -2.0; // Same position as before
 
         scene.add(this.mesh);
     }
