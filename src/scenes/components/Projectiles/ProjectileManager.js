@@ -36,15 +36,17 @@ export class ProjectileManager {
 
         // 生成タイマー
         this.spawnTimer = 0;
-        this.spawnInterval = 0.5; // 2秒ごとに発射
+        this.meanInterval = 1.0;
+        this.nextSpawnTime = this.getNextInterval(); // 最初の一発までの時間を計算
     }
 
     update(dt, lightsaber) {
         // 1. 新しい弾の生成 (Spawn)
         this.spawnTimer += dt;
-        if (this.spawnTimer > this.spawnInterval) {
+        if (this.spawnTimer > this.nextSpawnTime) {
             this.spawnProjectile();
             this.spawnTimer = 0;
+            this.nextSpawnTime = this.getNextInterval();
         }
 
         const bladeData = lightsaber ? lightsaber.getBladeData() : null;
@@ -92,16 +94,17 @@ export class ProjectileManager {
                     this.tempLineSaber.closestPointToPoint(p.mesh.position, true, this.tempVec);
                     this.tempNormal.subVectors(p.mesh.position, this.tempVec).normalize();
                     const vDotN = p.velocity.dot(this.tempNormal);
-                    p.velocity.sub(this.tempNormal.multiplyScalar(2 * vDotN));
+                    // p.velocity.sub(this.tempNormal.multiplyScalar(2 * vDotN));
+                    p.velocity.multiplyScalar(-1.0); 
                     
                     // おまけ: 弾かれた後は少し加速し、ランダムに散らす
                     p.velocity.multiplyScalar(1.5); 
-                    p.velocity.x += (Math.random() - 0.5) * 1;
-                    p.velocity.y += (Math.random() - 0.5) * 1;
+                    p.velocity.x += (Math.random() - 0.5) * 10;
+                    p.velocity.y += (Math.random() - 0.5) * 10;
 
                     p.mesh.material = p.mesh.material.clone(); // マテリアルを複製して個別に変更
-                    p.mesh.material.color.setHex(0x00ff00); // 緑色に変化
-                    p.mesh.material.emissive.setHex(0x00ff00);
+                    // p.mesh.material.color.setHex(0x00ff00); // 緑色に変化
+                    // p.mesh.material.emissive.setHex(0x00ff00);
 
                     // 4. 重複ヒットを防ぐフラグ
                     p.active = false;
@@ -250,5 +253,14 @@ export class ProjectileManager {
         // dP = w + (sc * u) - (tc * v)
         const dP = w.add(u.multiplyScalar(sc)).sub(v.multiplyScalar(tc));
         return dP.length();
+    }
+
+    getNextInterval() {
+        // Math.random() が 0 になると無限大になるのを防ぐ
+        const r = Math.max(Math.random(), 0.001);
+        
+        // 公式: T = -ln(U) * 平均
+        // これで「基本は平均値付近だが、たまにすごく短い/長い」間隔が生まれます
+        return -Math.log(r) * this.meanInterval;
     }
 }

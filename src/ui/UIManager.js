@@ -22,7 +22,7 @@ export class UIManager {
             inertia: 0.5,
             sound: false,
             music: false,
-            algorithm: "A",
+            algorithm: "B",
             metallic: 0.9,
             roughness: 0.3,
             clearcoat: 0.0,
@@ -201,6 +201,7 @@ export class UIManager {
         `;
 
         document.body.appendChild(panel);
+        document.getElementById('algorithm').value = this.params.algorithm;
     }
 
     bindEvents() {
