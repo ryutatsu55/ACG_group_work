@@ -331,11 +331,37 @@ export class Lightsaber {
     if (this.bladeCGlowMat) this.bladeCGlowMat.uniforms.uFlickerIntensity.value = value;
   }
 
+  getBladeData() {
+    if (!this.isOn || this.currentScale < 0.5) {
+      return null;
+    }
+
+    const baseLocal = new THREE.Vector3(0, 0, 0);
+    const tipLocal = new THREE.Vector3(0, 4.0 * this.currentScale, 0);
+
+    const baseWorld = baseLocal.applyMatrix4(this.container.matrixWorld);
+    const tipWorld = tipLocal.applyMatrix4(this.container.matrixWorld);
+
+    return {
+      start: baseWorld,
+      end: tipWorld,
+      radius: 0.15  
+    };
+  }
+
   // ■ 外部から呼ばれる更新メソッド
   toggle(value) {
     this.isOn = value;
 
     this.soundController.toggle(value);
+  }
+
+  triggerImpact() {
+    // 音を鳴らす (SoundEffectクラスのインスタンスを持っている前提)
+    if (this.soundController) {
+      // console.log("Hit sound on");
+      this.soundController.playImpact();
+    }
   }
 
   // ■ 毎フレーム呼ばれるアニメーション更新
