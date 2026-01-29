@@ -153,4 +153,33 @@ button:focus-visible {
     accent-color: #4cabff;
 }
 
+/* Collapsible sections */
+#ui-panel .collapsible {
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.2s ease;
+}
 
+#ui-panel .collapsible:hover {
+    color: #4cabff;
+}
+
+#ui-panel .collapsible .arrow {
+    font-size: 10px;
+    transition: transform 0.2s ease;
+}
+
+#ui-panel .collapsible-content {
+    overflow: hidden;
+    max-height: 500px;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    opacity: 1;
+}
+
+#ui-panel .collapsible-content.collapsed {
+    max-height: 0;
+    opacity: 0;
+}

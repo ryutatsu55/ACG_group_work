@@ -22,6 +22,7 @@ export class UIManager {
             inertia: 0.5,
             sound: false,
             music: false,
+            miniGame: true,
             algorithm: "B",
             metallic: 0.9,
             roughness: 0.3,
@@ -96,7 +97,7 @@ export class UIManager {
         panel.innerHTML = `
             <h2>Control Panel</h2>
 
-            <h6>Light Settings</h6>
+            <h6>Saber Settings</h6>
 
             <label>
                 Saber On
@@ -128,46 +129,9 @@ export class UIManager {
                 <input type="color" id="color" value="${this.params.color}">
             </label>
 
-            <h6>Handle Settings</h6>
-
             <label>
-                Metallic
-                <input type="range" id="metallic" min="0" max="1" step="0.01" value="${this.params.metallic}">
-            </label>
-
-            <label>
-                Roughness
-                <input type="range" id="roughness" min="0" max="1" step="0.01" value="${this.params.roughness}">
-            </label>
-
-            <label>
-                Clearcoat
-                <input type="range" id="clearcoat" min="0" max="1" step="0.01" value="${this.params.clearcoat}">
-            </label>
-            
-            <label>
-                Clearcoat Gloss
-                <input type="range" id="clearcoatgloss" min="0" max="1" step="0.01" value="${this.params.clearcoatGloss}">
-            </label>  
-            
-            <label>
-                Sheen
-                <input type="range" id="sheen" min="0" max="1" step="0.01" value="${this.params.sheen}">
-            </label>    
-            
-            <label>
-                Sheen Tint
-                <input type="range" id="sheentint" min="0" max="1" step="0.01" value="${this.params.sheenTint}">
-            </label> 
-            
-            <label>
-                Subsurface
-                <input type="range" id="subsurface" min="0" max="1" step="0.01" value="${this.params.subsurface}">
-            </label>
-
-            <label>
-                Handle Color
-                <input type="color" id="handlecolor" value="${this.params.handleColor}">
+                Mini-Game
+                <input type="checkbox" id="minigame_toggle" checked>
             </label>
             
             <h6>Audio Settings</h6>
@@ -191,6 +155,91 @@ export class UIManager {
                     <option value="C">C</option>
                 </select>
             </label>
+
+            <h6 class="collapsible" data-target="handle-section">
+                <span class="arrow">▶</span> Handle Settings
+            </h6>
+            <div id="handle-section" class="collapsible-content collapsed">
+                <label>
+                    Metallic
+                    <input type="range" id="metallic" min="0" max="1" step="0.01" value="${this.params.metallic}">
+                </label>
+
+                <label>
+                    Roughness
+                    <input type="range" id="roughness" min="0" max="1" step="0.01" value="${this.params.roughness}">
+                </label>
+
+                <label>
+                    Clearcoat
+                    <input type="range" id="clearcoat" min="0" max="1" step="0.01" value="${this.params.clearcoat}">
+                </label>
+                
+                <label>
+                    Clearcoat Gloss
+                    <input type="range" id="clearcoatgloss" min="0" max="1" step="0.01" value="${this.params.clearcoatGloss}">
+                </label>  
+                
+                <label>
+                    Sheen
+                    <input type="range" id="sheen" min="0" max="1" step="0.01" value="${this.params.sheen}">
+                </label>    
+                
+                <label>
+                    Sheen Tint
+                    <input type="range" id="sheentint" min="0" max="1" step="0.01" value="${this.params.sheenTint}">
+                </label> 
+                
+                <label>
+                    Subsurface
+                    <input type="range" id="subsurface" min="0" max="1" step="0.01" value="${this.params.subsurface}">
+                </label>
+
+                <label>
+                    Handle Color
+                    <input type="color" id="handlecolor" value="${this.params.handleColor}">
+                </label>
+            </div>
+
+            <h6 class="collapsible" data-target="bloom-section">
+                <span class="arrow">▶</span> Bloom Settings
+            </h6>
+            <div id="bloom-section" class="collapsible-content collapsed">
+                <label>
+                    Bloom Strength
+                    <input type="range" id="bloomStrength" min="0" max="3" step="0.01" value="${this.params.bloomStrength}">
+                </label>
+
+                <label>
+                    Bloom Radius
+                    <input type="range" id="bloomRadius" min="0" max="1" step="0.01" value="${this.params.bloomRadius}">
+                </label>
+
+                <label>
+                    Bloom Threshold
+                    <input type="range" id="bloomThreshold" min="0" max="1" step="0.01" value="${this.params.bloomThreshold}">
+                </label>
+
+                <label>
+                    Exposure
+                    <input type="range" id="exposure" min="0" max="3" step="0.01" value="${this.params.exposure}">
+                </label>
+            </div>
+
+            <h6 class="collapsible" data-target="floor-section">
+                <span class="arrow">▶</span> Floor Settings
+            </h6>
+            <div id="floor-section" class="collapsible-content collapsed">
+                <label>
+                    Floor Attenuation
+                    <input type="range" id="floorAttenuation" min="0.01" max="1" step="0.01" value="${this.params.floorAttenuation}">
+                </label>
+
+                <label>
+                    Floor Max Distance
+                    <input type="range" id="floorMaxDist" min="1" max="50" step="0.5" value="${this.params.floorMaxDist}">
+                </label>
+            </div>
 
             <h6>Real-Time Status</h6>
             <div id="debug">
@@ -227,6 +276,14 @@ export class UIManager {
 
             if (this.scene.lightsaber && this.scene.setMusicEnable) {
                 this.scene.setMusicEnable(e.target.checked);
+            }
+        });
+
+        $('minigame_toggle').addEventListener('change', (e) => {
+            this.params.miniGame = e.target.checked;
+
+            if (this.scene.projectileManager && this.scene.projectileManager.setEnabled) {
+                this.scene.projectileManager.setEnabled(e.target.checked);
             }
         });
 
@@ -293,7 +350,7 @@ export class UIManager {
             if (this.scene.lightsaber) {
                 this.scene.lightsaber.setClearcoat(v);
             }
-        });        
+        });
 
         $('clearcoatgloss').addEventListener('input', (e) => {
             const v = parseFloat(e.target.value);
@@ -301,15 +358,15 @@ export class UIManager {
             if (this.scene.lightsaber) {
                 this.scene.lightsaber.setClearcoatGloss(v);
             }
-        });   
-        
+        });
+
         $('sheen').addEventListener('input', (e) => {
             const v = parseFloat(e.target.value);
             this.params.sheen = v;
             if (this.scene.lightsaber) {
                 this.scene.lightsaber.setSheen(v);
             }
-        });        
+        });
 
         $('sheentint').addEventListener('input', (e) => {
             const v = parseFloat(e.target.value);
@@ -317,21 +374,88 @@ export class UIManager {
             if (this.scene.lightsaber) {
                 this.scene.lightsaber.setSheenTint(v);
             }
-        });       
-        
+        });
+
         $('subsurface').addEventListener('input', (e) => {
             const v = parseFloat(e.target.value);
             this.params.subsurface = v;
             if (this.scene.lightsaber) {
                 this.scene.lightsaber.setSubsurface(v);
             }
-        });        
+        });
 
         $('algorithm').addEventListener('change', (e) => {
             this.params.algorithm = e.target.value;
             if (this.scene.lightsaber) {
                 this.scene.lightsaber.setAlgorithm(e.target.value);
             }
+        });
+
+        // Bloom controls
+        $('bloomStrength').addEventListener('input', (e) => {
+            const v = parseFloat(e.target.value);
+            this.params.bloomStrength = v;
+            if (this.scene.setBloomStrength) {
+                this.scene.setBloomStrength(v);
+            }
+        });
+
+        $('bloomRadius').addEventListener('input', (e) => {
+            const v = parseFloat(e.target.value);
+            this.params.bloomRadius = v;
+            if (this.scene.setBloomRadius) {
+                this.scene.setBloomRadius(v);
+            }
+        });
+
+        $('bloomThreshold').addEventListener('input', (e) => {
+            const v = parseFloat(e.target.value);
+            this.params.bloomThreshold = v;
+            if (this.scene.setBloomThreshold) {
+                this.scene.setBloomThreshold(v);
+            }
+        });
+
+        $('exposure').addEventListener('input', (e) => {
+            const v = parseFloat(e.target.value);
+            this.params.exposure = v;
+            if (this.scene.setExposure) {
+                this.scene.setExposure(v);
+            }
+        });
+
+        // Floor controls
+        $('floorAttenuation').addEventListener('input', (e) => {
+            const v = parseFloat(e.target.value);
+            this.params.floorAttenuation = v;
+            if (this.scene.floor && this.scene.floor.setAttenuation) {
+                this.scene.floor.setAttenuation(v);
+            }
+        });
+
+        $('floorMaxDist').addEventListener('input', (e) => {
+            const v = parseFloat(e.target.value);
+            this.params.floorMaxDist = v;
+            if (this.scene.floor && this.scene.floor.setMaxDist) {
+                this.scene.floor.setMaxDist(v);
+            }
+        });
+
+        // Collapsible sections toggle
+        document.querySelectorAll('.collapsible').forEach((header) => {
+            header.addEventListener('click', () => {
+                const targetId = header.getAttribute('data-target');
+                const content = document.getElementById(targetId);
+                const arrow = header.querySelector('.arrow');
+
+                if (content.classList.contains('collapsed')) {
+                    content.classList.remove('collapsed');
+                    arrow.textContent = '▼';
+                } else {
+                    content.classList.add('collapsed');
+                    arrow.textContent = '▶';
+                }
+            });
         });
 
         document.addEventListener('mousedown', (e) => {

@@ -38,15 +38,29 @@ export class ProjectileManager {
         this.spawnTimer = 0;
         this.meanInterval = 1.0;
         this.nextSpawnTime = this.getNextInterval(); // 最初の一発までの時間を計算
+        this.enabled = true; // Mini-game enabled by default
+    }
+
+    setEnabled(enabled) {
+        this.enabled = enabled;
+
+        // If disabling, remove all existing projectiles
+        if (!enabled) {
+            for (let i = this.projectiles.length - 1; i >= 0; i--) {
+                this.removeProjectile(i);
+            }
+        }
     }
 
     update(dt, lightsaber) {
-        // 1. 新しい弾の生成 (Spawn)
-        this.spawnTimer += dt;
-        if (this.spawnTimer > this.nextSpawnTime) {
-            this.spawnProjectile();
-            this.spawnTimer = 0;
-            this.nextSpawnTime = this.getNextInterval();
+        // 1. 新しい弾の生成 (Spawn) - only if enabled
+        if (this.enabled) {
+            this.spawnTimer += dt;
+            if (this.spawnTimer > this.nextSpawnTime) {
+                this.spawnProjectile();
+                this.spawnTimer = 0;
+                this.nextSpawnTime = this.getNextInterval();
+            }
         }
 
         const bladeData = lightsaber ? lightsaber.getBladeData() : null;
@@ -58,7 +72,7 @@ export class ProjectileManager {
 
             // 手前（Z軸プラス方向）へ移動
             p.mesh.position.add(p.velocity.clone().multiplyScalar(dt));
-        
+
             const targetPos = p.mesh.position.clone().add(p.velocity);
             p.mesh.lookAt(targetPos);
 
@@ -78,14 +92,14 @@ export class ProjectileManager {
 
                 // ★ 数学関数で「線分同士の最短距離」を計算
                 const distance = this.dist3D_Segment_to_Segment(
-                    this.tempLineSaber, 
+                    this.tempLineSaber,
                     this.tempLineProjectile
                 );
-                
+
                 // 衝突判定 (弾の半径0.2 + セーバー半径)
                 if (distance < (0.2 + bladeData.radius)) {
                     // 当たった時の処理！
-                    console.log("Hit!"); 
+                    console.log("Hit!");
                     lightsaber.triggerImpact();
                     this.onHitCallback();
 
@@ -95,10 +109,10 @@ export class ProjectileManager {
                     this.tempNormal.subVectors(p.mesh.position, this.tempVec).normalize();
                     const vDotN = p.velocity.dot(this.tempNormal);
                     // p.velocity.sub(this.tempNormal.multiplyScalar(2 * vDotN));
-                    p.velocity.multiplyScalar(-1.0); 
-                    
+                    p.velocity.multiplyScalar(-1.0);
+
                     // おまけ: 弾かれた後は少し加速し、ランダムに散らす
-                    p.velocity.multiplyScalar(1.5); 
+                    p.velocity.multiplyScalar(1.5);
                     p.velocity.x += (Math.random() - 0.5) * 10;
                     p.velocity.y += (Math.random() - 0.5) * 10;
 
@@ -108,26 +122,26 @@ export class ProjectileManager {
 
                     // 4. 重複ヒットを防ぐフラグ
                     p.active = false;
-                    
+
                     // 5. 火花を散らす
                     // this.spawnExplosion(this.tempVec, p.velocity);
                 }
             }
 
             // 画面外(遠く)へ行ったら削除 (手前だけでなく、奥に弾き返された場合も考慮して範囲を広げる)
-            if (p.mesh.position.z > 10 || p.mesh.position.z < -30 || Math.abs(p.mesh.position.x) > 30) { 
+            if (p.mesh.position.z > 10 || p.mesh.position.z < -30 || Math.abs(p.mesh.position.x) > 30) {
                 this.removeProjectile(i);
             }
         }
         this.updateParticles(dt);
     }
-    
+
     updateParticles(dt) {
         for (let i = this.particles.length - 1; i >= 0; i--) {
             const p = this.particles[i];
             p.life -= dt;
             p.mesh.position.add(p.velocity.clone().multiplyScalar(dt));
-            
+
             if (p.life <= 0) {
                 this.scene.remove(p.mesh);
                 this.particles.splice(i, 1);
@@ -146,7 +160,7 @@ export class ProjectileManager {
 
             const mat = this.particleMat.clone();
             mat.color.copy(col);
-            
+
             const mesh = new THREE.Mesh(this.particleGeo, mat);
             mesh.position.copy(pos);
 
@@ -158,7 +172,7 @@ export class ProjectileManager {
                 (Math.random() - 0.5) * 10,
                 (Math.random() - 0.5) * 10
             );
-            
+
             const velocity = baseVel.add(spread);
 
             this.scene.add(mesh);
@@ -199,10 +213,10 @@ export class ProjectileManager {
 
     removeProjectile(index) {
         const p = this.projectiles[index];
-        
+
         // シーンから削除
         this.scene.remove(p.mesh);
-        
+
         // 配列から削除
         this.projectiles.splice(index, 1);
     }
@@ -258,7 +272,7 @@ export class ProjectileManager {
     getNextInterval() {
         // Math.random() が 0 になると無限大になるのを防ぐ
         const r = Math.max(Math.random(), 0.001);
-        
+
         // 公式: T = -ln(U) * 平均
         // これで「基本は平均値付近だが、たまにすごく短い/長い」間隔が生まれます
         return -Math.log(r) * this.meanInterval;
