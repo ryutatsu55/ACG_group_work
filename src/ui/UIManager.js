@@ -140,11 +140,6 @@ export class UIManager {
                 <input type="checkbox" id="sound_toggle">
             </label>
 
-            <label>
-                Music On
-                <input type="checkbox" id="music_toggle">
-            </label>
-
             <h6>Rendering Settings</h6>
 
             <label>
@@ -271,13 +266,13 @@ export class UIManager {
             }
         });
 
-        $('music_toggle').addEventListener('change', (e) => {
-            this.params.music = e.target.checked;
+        // $('music_toggle').addEventListener('change', (e) => {
+        //     this.params.music = e.target.checked;
 
-            if (this.scene.lightsaber && this.scene.setMusicEnable) {
-                this.scene.setMusicEnable(e.target.checked);
-            }
-        });
+        //     if (this.scene.lightsaber && this.scene.setMusicEnable) {
+        //         this.scene.setMusicEnable(e.target.checked);
+        //     }
+        // });
 
         $('minigame_toggle').addEventListener('change', (e) => {
             this.params.miniGame = e.target.checked;
