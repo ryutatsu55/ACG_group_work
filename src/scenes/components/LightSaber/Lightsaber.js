@@ -195,16 +195,6 @@ export class Lightsaber {
     this.bladeCGlow = new THREE.Mesh(glowGeo, this.bladeCGlowMat);
     this.container.add(this.bladeCGlow);
     this.bladeCGlow.visible = false;
-
-    // PointLight for scene illumination
-    this.bladeLightC = new THREE.PointLight(
-      this.bladeColor,
-      150,
-      50,
-      2
-    );
-    this.bladeLightC.position.y = bladeHeight / 2;
-    this.bladeCCore.add(this.bladeLightC);
   }
 
   setAlgorithm(type) {
@@ -345,7 +335,7 @@ export class Lightsaber {
     return {
       start: baseWorld,
       end: tipWorld,
-      radius: 0.15  
+      radius: 0.15
     };
   }
 
