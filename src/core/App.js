@@ -5,6 +5,9 @@ import '../style.css'
 import Stats from "stats.js";
 import * as THREE from 'three';
 // import { Sound } from './Sound.js';
+import { addScrollZoomPerspective } from '../controls/scrollZoomPerspective.js';
+import { createDragOrbit } from '../controls/dragOrbit.js';
+import { createDragOrbitPerspective } from '../controls/dragOrbitPerspective.js';
 
 export class App {
   constructor() {
@@ -16,56 +19,94 @@ export class App {
     this.sceneSystem = new MainScene();
     this.physicsSystem = new PhysicsWorld();
 
+    const camera = this.sceneSystem.getCamera();
+    const dom = this.sceneSystem.getDomElement();
+
+    // Initialize scroll-to-zoom
+    this.scrollZoom = addScrollZoomPerspective({
+      camera,
+      domElement: dom,
+      minFov: 22,
+      maxFov: 75,
+      zoomSpeed: 1.0,
+      smooth: 0.2,
+    });
+
     // this.physicsSystem.onClick = () => {
     //   this.sceneSystem.lightsaber.toggle();
     // };
 
     this.uiSystem = new UIManager(this.sceneSystem, this.physicsSystem);
+    
+    // this.dragOrbit = createDragOrbit({
+    //   camera,
+    //   domElement: dom,
+    //   rotateSpeed: 0.0025,
+    //   dragThresholdPx: 4,
+    //   resetAnimSec: 0.25
+    //   // getTarget: () => {
+    //   //   const v = new THREE.Vector3();
+    //   //   this.sceneSystem.lightsaber.hilt.getWorldPosition(v);
+    //   //   return v;
+    //   // },
+    // });
 
-    // roop start
+
+this.dragOrbit = createDragOrbitPerspective({
+    camera,
+    domElement: dom,
+    rotateSpeed: 0.0025,
+    dragThresholdPx: 4,
+    resetAnimSec: 0.25,
+
+  });
+
+    this.dragOrbit.setDefault({
+    targetW: new THREE.Vector3(0, 0, 0),
+    spherical: { radius: 3, phi: Math.PI/2, theta: 0 }
+  });
+
+    if (this.uiSystem && typeof this.uiSystem.onTrackingPauseChanged === 'function') {
+      this.uiSystem.onTrackingPauseChanged((paused) => {
+        this.dragOrbit.setEnabled(paused);
+      });
+    }
+
+    // loop start
     this.animate();
   }
 
   animate() {
     requestAnimationFrame(this.animate.bind(this));
     const dt = this.clock.getDelta();
-
     this.stats.begin();
 
-    // A. 物理計算を実行 (Physics)
-    // calc some physical data like pos, angle, speed etc...
-    // decide how the objects will behave, move or illuminate based on input like mouse
+    // physics -> scene updates...
     this.physicsSystem.update(dt);
     const physicsData = this.physicsSystem.getSaberState();
-
-    // B. 計算結果を見た目に反映 (Physics -> Scene)
-    // calc how objects look and render based on the data we get from physics System
     const saber = this.sceneSystem.lightsaber;
     saber.setRotation(physicsData.rotX, physicsData.rotZ);
     saber.setPosition(physicsData.posX, physicsData.posY, physicsData.posZ);
     saber.setSpeed(physicsData.swingSpeed);
     saber.update(dt);
 
-    this.sceneSystem.updateBloom()
-
-    // Update floor lighting from lightsaber
+    this.sceneSystem.updateBloom();
     const floor = this.sceneSystem.floor;
-    if (floor && floor.updateFromLightsaber) {
-      floor.updateFromLightsaber(saber);
-    }
+    if (floor && floor.updateFromLightsaber) floor.updateFromLightsaber(saber);
+    this.sceneSystem.stars.update();
+    this.sceneSystem.projectileManager.update(dt, this.sceneSystem.lightsaber);
 
-    const stars = this.sceneSystem.stars;
-    stars.update();
-
-    const projectile = this.sceneSystem.projectileManager;
-    projectile.update(dt, this.sceneSystem.lightsaber)
-
-    // C. インジケーター更新 (UI)
     this.uiSystem.updateStatus(physicsData);
 
+    const cam = this.sceneSystem.getCamera();
+    console.log('camera type:', cam && (cam.isPerspectiveCamera ? 'Perspective' : cam.isOrthographicCamera ? 'Orthographic' : typeof cam));
+    console.log('initial fov:', cam.fov, 'zoom:', cam.zoom);
+
+    if (this.scrollZoom) this.scrollZoom.update();
+
+    if (this.dragOrbit) this.dragOrbit.update(dt);
 
     this.sceneSystem.render();
-
     this.stats.end();
   }
 }

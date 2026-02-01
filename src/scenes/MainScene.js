@@ -27,6 +27,8 @@ export class MainScene {
         this.camera.position.set(0, 2, 5);
         this.camera.lookAt(0, 1, 0);
 
+        this._externalOrbitActive = false;
+
         this.listener = new THREE.AudioListener();
         this.camera.add(this.listener);
 
@@ -43,7 +45,6 @@ export class MainScene {
         dirLight.position.set(5, 5, 5);
         this.scene.add(dirLight);
 
-        
         this.baseBloomStrength = 0.5;
         this.currentBloomStrength = this.baseBloomStrength;
 
@@ -131,4 +132,16 @@ export class MainScene {
             this.bloomPass.strength = this.currentBloomStrength;
         }
     }
+
+    getCamera() { 
+        return this.camera; 
+    }
+
+    getDomElement() { 
+        return this.renderer ? this.renderer.domElement : document.body; 
+    }
+
+
+    setExternalOrbitActive(v) { this._externalOrbitActive = !!v; }
+
 }

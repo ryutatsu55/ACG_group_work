@@ -41,6 +41,9 @@ export class UIManager {
             floorMaxDist: 15.0
         };
 
+        this.onTrackingPauseChanged = null;
+        this.trackingPaused = false;
+
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
                 this.createUI();
@@ -453,22 +456,37 @@ export class UIManager {
             });
         });
 
-        document.addEventListener('mousedown', (e) => {
-            // Left mouse button only
-            if (e.button !== 0) return;
+        let lastToggleTs = 0;
+        document.addEventListener('click', (e) => {
+        // Left click only
+        if (e.button !== 0) return;
 
-            // Ignore clicks on the UI panel
-            if (e.target.closest('#ui-panel')) return;
+        // Ignore clicks on the UI panel
+        if (e.target.closest('#ui-panel')) return;
 
-            this.movementEnabled = !this.movementEnabled;
+        // If some other handler (e.g., orbit after a drag) consumed this click, ignore
+        if (e.defaultPrevented) return;
 
-            if (this.physics.setMovementEnabled) {
-                this.physics.setMovementEnabled(this.movementEnabled);
-            }
+        // Debounce quick double-clicks (optional)
+        const now = performance.now();
+        if (now - lastToggleTs < 150) return;
+        lastToggleTs = now;
 
-            // Optional cursor feedback
-            document.body.style.cursor = this.movementEnabled ? 'default' : 'not-allowed';
-        });
+        // Toggle movement
+        this.movementEnabled = !this.movementEnabled;
+
+        if (this.physics.setMovementEnabled) {
+            this.physics.setMovementEnabled(this.movementEnabled);
+        }
+
+        // Keep "paused" state in sync and inform listeners (App -> dragOrbit)
+        this.setTrackingPaused(!this.movementEnabled);
+
+        // Optional cursor feedback
+
+        document.body.style.cursor = this.movementEnabled ? 'default' : 'not-allowed';
+        }, { passive: true });
+
 
     }
 
@@ -482,4 +500,14 @@ export class UIManager {
         document.getElementById('dbg_pos').textContent =
             `${saber_state.posX.toFixed(2)}, ${saber_state.posY.toFixed(2)}, ${saber_state.posZ.toFixed(2)}`;
     }
+
+    setTrackingPaused(v) {
+    this.trackingPaused = !!v;
+    if (this.onTrackingPauseChanged) this.onTrackingPauseChanged(this.trackingPaused);
+    }
+
+    isTrackingPaused() { 
+        return this.trackingPaused; 
+    }
+
 }
