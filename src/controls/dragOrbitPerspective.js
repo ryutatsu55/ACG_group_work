@@ -10,8 +10,8 @@ export function createDragOrbitPerspective({
     dragThresholdPx = 4,
     minRadius = 0.1,
     resetAnimSec = 0.25,
-    defaultTargetWorld = null, 
-    defaultSpherical = null, 
+    defaultTargetWorld = null,
+    defaultSpherical = null,
     enabled: enabledInit = true,
 } = {}) {
     if (!camera || !domElement || !camera.isPerspectiveCamera) {
@@ -37,6 +37,11 @@ export function createDragOrbitPerspective({
     const startTW = new THREE.Vector3();
     const endTW = new THREE.Vector3();
 
+    const keyPan = { left: false, right: false, up: false, down: false };
+
+    const basePanUnitsPerSec = 1.5;
+    const panScaleWithRadius = 0.35;
+
     const _default = {
         targetW: (defaultTargetWorld?.isVector3) ? defaultTargetWorld.clone() : new THREE.Vector3(0, 0, 0),
         spherical: {
@@ -45,6 +50,32 @@ export function createDragOrbitPerspective({
             theta: defaultSpherical?.theta ?? 0
         }
     };
+
+    const _tmpDir = new THREE.Vector3();
+    const _tmpRight = new THREE.Vector3();
+    const _tmpUp = new THREE.Vector3();
+    const _disp = new THREE.Vector3();
+
+    function panCameraWorld(dx, dy) {
+        updateWorldMatrices();
+
+        camera.getWorldDirection(_tmpDir).normalize();
+        _tmpRight.crossVectors(_tmpDir, camera.up).normalize();
+        _tmpUp.copy(camera.up).normalize();
+
+        _disp.set(0, 0, 0)
+            .addScaledVector(_tmpRight, dx) // +x = right
+            .addScaledVector(_tmpUp, dy); // +y = up
+
+        targetW.add(_disp);
+        camera.getWorldPosition(camW).add(_disp);
+
+        assignLocalFromWorld(camW);
+
+        offsetW.copy(camW).sub(targetW);
+        spherical.setFromVector3(offsetW).makeSafe();
+        lastGoodRadius = spherical.radius;
+    }
 
     function getWorldTarget() {
         if (typeof getTargetWorld === 'function') {
@@ -185,6 +216,30 @@ export function createDragOrbitPerspective({
         if (e.button === 0) { e.preventDefault(); e.stopImmediatePropagation(); }
     }
 
+    function onKeyDown(e) {
+        if (!enabled) return;
+
+        if (e.target && e.target.closest && e.target.closest('#ui-panel')) return;
+
+        switch (e.code) {
+            case 'ArrowLeft': keyPan.left = true; e.preventDefault(); break;
+            case 'ArrowRight': keyPan.right = true; e.preventDefault(); break;
+            case 'ArrowUp': keyPan.up = true; e.preventDefault(); break;
+            case 'ArrowDown': keyPan.down = true; e.preventDefault(); break;
+            default: break;
+        }
+    }
+
+    function onKeyUp(e) {
+        switch (e.code) {
+            case 'ArrowLeft': keyPan.left = false; break;
+            case 'ArrowRight': keyPan.right = false; break;
+            case 'ArrowUp': keyPan.up = false; break;
+            case 'ArrowDown': keyPan.down = false; break;
+            default: break;
+        }
+    }
+
     function setEnabled(v) {
         enabled = !!v;
         domElement.style.cursor = enabled ? 'grab' : 'auto';
@@ -193,11 +248,26 @@ export function createDragOrbitPerspective({
 
     function update(dt = 0) {
         if (!enabled) return;
+
+        if (keyPan.left || keyPan.right || keyPan.up || keyPan.down) {
+            const dist = Math.max(spherical.radius, 0.0001);
+            const unitsPerSec = basePanUnitsPerSec + panScaleWithRadius * dist;
+
+            const dx = ((keyPan.right ? 1 : 0) - (keyPan.left ? 1 : 0)) * unitsPerSec * dt;
+            const dy = ((keyPan.up ? 1 : 0) - (keyPan.down ? 1 : 0)) * unitsPerSec * dt;
+
+            if (dx !== 0 || dy !== 0) {
+                getWorldTarget();
+                panCameraWorld(dx, dy);
+            }
+        }
+
         if (!ptrActive && typeof getTargetWorld === 'function') {
             const prev = targetW.clone();
             getWorldTarget();
             if (!prev.equals(targetW)) applyToCamera();
         }
+
         if (resetting) stepResetAnimation(dt);
     }
 
@@ -215,6 +285,8 @@ export function createDragOrbitPerspective({
         domElement.removeEventListener('pointercancel', onPointerUp);
         domElement.removeEventListener('mousedown', onMouseDownCapture, true);
         domElement.removeEventListener('click', onClickCapture, true);
+        window.removeEventListener('keydown', onKeyDown);
+        window.removeEventListener('keyup', onKeyUp);
     }
 
     domElement.addEventListener('pointerdown', onPointerDown, { passive: false });
@@ -223,6 +295,10 @@ export function createDragOrbitPerspective({
     domElement.addEventListener('pointercancel', onPointerUp, { passive: true });
     domElement.addEventListener('mousedown', onMouseDownCapture, true);
     domElement.addEventListener('click', onClickCapture, true);
+
+    window.addEventListener('keydown', onKeyDown, { passive: false });
+    window.addEventListener('keyup', onKeyUp, { passive: true });
+
 
     if (!defaultTargetWorld || !defaultSpherical) {
         updateWorldMatrices(); getWorldTarget(); camera.getWorldPosition(camW);

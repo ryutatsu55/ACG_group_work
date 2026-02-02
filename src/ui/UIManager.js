@@ -100,7 +100,6 @@ export class UIManager {
         this.physics.setSensitivity(this.params.sensitivity);
         this.physics.setInertia(this.params.inertia);
 
-        // Ensure physics knows the initial movement state
         this.physics.setMovementEnabled?.(this.movementEnabled);
         this.updateInstructionStatus(this.movementEnabled);
     }
@@ -109,155 +108,154 @@ export class UIManager {
         const panel = document.createElement('div');
         panel.id = 'ui-panel';
 
-        // NOTE: Using actual tags (no HTML entities) so the panel renders properly
         panel.innerHTML = `
-      <h2>Control Panel</h2>
+        <h2>Control Panel</h2>
 
-      <h6>Saber Settings</h6>
+        <h6>Saber Settings</h6>
 
-      <label>
-        Saber On
-        <input type="checkbox" id="saber_toggle" checked>
-      </label>
-
-      <label>
-        Snoise Mode
-        <input type="checkbox" id="saber_mode" checked>
-      </label>
-
-      <label>
-        Sensitivity
-        <input type="range" id="sensitivity" min="0.1" max="1" step="0.01" value="${this.params.sensitivity}">
-      </label>
-
-      <label>
-        Inertia
-        <input type="range" id="inertia" min="0.1" max="1" step="0.01" value="${this.params.inertia}">
-      </label>
-
-      <label>
-        Flicker Intensity
-        <input type="range" id="flickerIntensity" min="0" max="1" step="0.01" value="${this.params.flickerIntensity}">
-      </label>
-
-      <label>
-        Blade Color
-        <input type="color" id="color" value="${this.params.color}">
-      </label>
-
-      <label>
-        Mini-Game
-        <input type="checkbox" id="minigame_toggle" checked>
-      </label>
-
-      <h6>Audio Settings</h6>
-      <label>
-        Sound On
-        <input type="checkbox" id="sound_toggle">
-      </label>
-
-      <h6>Rendering Settings</h6>
-
-      <label>
-        Algorithm
-        <select id="algorithm">
-          <option value="A">A</option>
-          <option value="B">B</option>
-          <option value="C">C</option>
-        </select>
-      </label>
-
-      <h6 class="collapsible" data-target="handle-section">
-        <span class="arrow">▶</span> Handle Settings
-      </h6>
-      <div id="handle-section" class="collapsible-content collapsed">
         <label>
-          Metallic
-          <input type="range" id="metallic" min="0" max="1" step="0.01" value="${this.params.metallic}">
+            Saber On
+            <input type="checkbox" id="saber_toggle" checked>
         </label>
 
         <label>
-          Roughness
-          <input type="range" id="roughness" min="0" max="1" step="0.01" value="${this.params.roughness}">
+            Snoise Mode
+            <input type="checkbox" id="saber_mode" checked>
         </label>
 
         <label>
-          Clearcoat
-          <input type="range" id="clearcoat" min="0" max="1" step="0.01" value="${this.params.clearcoat}">
+            Sensitivity
+            <input type="range" id="sensitivity" min="0.1" max="1" step="0.01" value="${this.params.sensitivity}">
         </label>
 
         <label>
-          Clearcoat Gloss
-          <input type="range" id="clearcoatgloss" min="0" max="1" step="0.01" value="${this.params.clearcoatGloss}">
+            Inertia
+            <input type="range" id="inertia" min="0.1" max="1" step="0.01" value="${this.params.inertia}">
         </label>
 
         <label>
-          Sheen
-          <input type="range" id="sheen" min="0" max="1" step="0.01" value="${this.params.sheen}">
+            Flicker Intensity
+            <input type="range" id="flickerIntensity" min="0" max="1" step="0.01" value="${this.params.flickerIntensity}">
         </label>
 
         <label>
-          Sheen Tint
-          <input type="range" id="sheentint" min="0" max="1" step="0.01" value="${this.params.sheenTint}">
+            Blade Color
+            <input type="color" id="color" value="${this.params.color}">
         </label>
 
         <label>
-          Subsurface
-          <input type="range" id="subsurface" min="0" max="1" step="0.01" value="${this.params.subsurface}">
+            Mini-Game
+            <input type="checkbox" id="minigame_toggle" checked>
         </label>
+
+        <h6>Audio Settings</h6>
+        <label>
+            Sound On
+            <input type="checkbox" id="sound_toggle">
+        </label>
+
+        <h6>Rendering Settings</h6>
 
         <label>
-          Handle Color
-          <input type="color" id="handlecolor" value="${this.params.handleColor}">
-        </label>
-      </div>
-
-      <h6 class="collapsible" data-target="bloom-section">
-        <span class="arrow">▶</span> Bloom Settings
-      </h6>
-      <div id="bloom-section" class="collapsible-content collapsed">
-        <label>
-          Bloom Strength
-          <input type="range" id="bloomStrength" min="0" max="3" step="0.01" value="${this.params.bloomStrength}">
+            Algorithm
+            <select id="algorithm">
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            </select>
         </label>
 
-        <label>
-          Bloom Radius
-          <input type="range" id="bloomRadius" min="0" max="1" step="0.01" value="${this.params.bloomRadius}">
-        </label>
+        <h6 class="collapsible" data-target="handle-section">
+            <span class="arrow">▶</span> Handle Settings
+        </h6>
+        <div id="handle-section" class="collapsible-content collapsed">
+            <label>
+            Metallic
+            <input type="range" id="metallic" min="0" max="1" step="0.01" value="${this.params.metallic}">
+            </label>
 
-        <label>
-          Bloom Threshold
-          <input type="range" id="bloomThreshold" min="0" max="1" step="0.01" value="${this.params.bloomThreshold}">
-        </label>
+            <label>
+            Roughness
+            <input type="range" id="roughness" min="0" max="1" step="0.01" value="${this.params.roughness}">
+            </label>
 
-        <label>
-          Exposure
-          <input type="range" id="exposure" min="0" max="3" step="0.01" value="${this.params.exposure}">
-        </label>
-      </div>
+            <label>
+            Clearcoat
+            <input type="range" id="clearcoat" min="0" max="1" step="0.01" value="${this.params.clearcoat}">
+            </label>
 
-      <h6 class="collapsible" data-target="floor-section">
-        <span class="arrow">▶</span> Floor Settings
-      </h6>
-      <div id="floor-section" class="collapsible-content collapsed">
-        <label>
-          Floor Attenuation
-          <input type="range" id="floorAttenuation" min="0.01" max="1" step="0.01" value="${this.params.floorAttenuation}">
-        </label>
+            <label>
+            Clearcoat Gloss
+            <input type="range" id="clearcoatgloss" min="0" max="1" step="0.01" value="${this.params.clearcoatGloss}">
+            </label>
 
-        <label>
-          Floor Max Distance
-          <input type="range" id="floorMaxDist" min="1" max="50" step="0.5" value="${this.params.floorMaxDist}">
-        </label>
-      </div>
+            <label>
+            Sheen
+            <input type="range" id="sheen" min="0" max="1" step="0.01" value="${this.params.sheen}">
+            </label>
 
-      <h6>Real-Time Status</h6>
-      <div id="debug">
-        <div class="my-panel">Swing Speed: <span id="dbg_swing"></span></div>
-        <div class="my-panel">Rot: <span id="dbg_rot"></span></div>
-        <div class="my-panel">Pos: <span id="dbg_pos"></span></div>
-      </div>
+            <label>
+            Sheen Tint
+            <input type="range" id="sheentint" min="0" max="1" step="0.01" value="${this.params.sheenTint}">
+            </label>
+
+            <label>
+            Subsurface
+            <input type="range" id="subsurface" min="0" max="1" step="0.01" value="${this.params.subsurface}">
+            </label>
+
+            <label>
+            Handle Color
+            <input type="color" id="handlecolor" value="${this.params.handleColor}">
+            </label>
+        </div>
+
+        <h6 class="collapsible" data-target="bloom-section">
+            <span class="arrow">▶</span> Bloom Settings
+        </h6>
+        <div id="bloom-section" class="collapsible-content collapsed">
+            <label>
+            Bloom Strength
+            <input type="range" id="bloomStrength" min="0" max="3" step="0.01" value="${this.params.bloomStrength}">
+            </label>
+
+            <label>
+            Bloom Radius
+            <input type="range" id="bloomRadius" min="0" max="1" step="0.01" value="${this.params.bloomRadius}">
+            </label>
+
+            <label>
+            Bloom Threshold
+            <input type="range" id="bloomThreshold" min="0" max="1" step="0.01" value="${this.params.bloomThreshold}">
+            </label>
+
+            <label>
+            Exposure
+            <input type="range" id="exposure" min="0" max="3" step="0.01" value="${this.params.exposure}">
+            </label>
+        </div>
+
+        <h6 class="collapsible" data-target="floor-section">
+            <span class="arrow">▶</span> Floor Settings
+        </h6>
+        <div id="floor-section" class="collapsible-content collapsed">
+            <label>
+            Floor Attenuation
+            <input type="range" id="floorAttenuation" min="0.01" max="1" step="0.01" value="${this.params.floorAttenuation}">
+            </label>
+
+            <label>
+            Floor Max Distance
+            <input type="range" id="floorMaxDist" min="1" max="50" step="0.5" value="${this.params.floorMaxDist}">
+            </label>
+        </div>
+
+        <h6>Real-Time Status</h6>
+        <div id="debug">
+            <div class="my-panel">Swing Speed: <span id="dbg_swing"></span></div>
+            <div class="my-panel">Rot: <span id="dbg_rot"></span></div>
+            <div class="my-panel">Pos: <span id="dbg_pos"></span></div>
+        </div>
     `;
 
         document.body.appendChild(panel);
@@ -274,7 +272,11 @@ export class UIManager {
         <li>
             <span class="action">Curser</span>
             <span class="desc">Yield lightsaber</span>
-        </li>        
+        </li> 
+        <li>
+            <span class="action">Scroll</span>
+            <span class="desc">Camera Zoom</span>
+        </li>          
         <li>
             <span class="action">Drag</span>
             <span class="desc">Shift camera angle</span>
@@ -284,9 +286,16 @@ export class UIManager {
             <span class="desc">Default camera angle</span>
         </li>
         <li>
-            <span class="action">Scroll</span>
-            <span class="desc">Camera Zoom</span>
-        </li>  
+        <span class="keys">
+            <span class="key dpad">
+            <span class="up">↑</span>
+            <span class="left">←</span>
+            <span class="right">→</span>
+            <span class="down">↓</span>
+            </span>
+        </span>
+        <span class="desc">Shift camera</span>
+        </li>
         <li>
             <span class="keys">
             <kbd>Space</kbd>
@@ -318,14 +327,11 @@ export class UIManager {
     setMovementEnabled(enabled) {
         this.movementEnabled = !!enabled;
 
-        // Inform physics and any listeners
         this.physics.setMovementEnabled?.(this.movementEnabled);
         this.setTrackingPaused(!this.movementEnabled);
 
-        // Visual hint (optional)
         document.body.style.cursor = this.movementEnabled ? 'default' : 'not-allowed';
 
-        // Update HUD
         this.updateInstructionStatus(this.movementEnabled);
     }
 
@@ -367,7 +373,6 @@ export class UIManager {
             }
         });
 
-        // FIX: store under the right param name and call the right API
         $('handlecolor').addEventListener('input', (e) => {
             this.params.handleColor = e.target.value;
             if (this.scene.lightsaber) {
