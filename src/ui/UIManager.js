@@ -2,6 +2,7 @@ export class UIManager {
     constructor(sceneSystem, physicsSystem) {
         this.scene = sceneSystem;
         this.physics = physicsSystem;
+
         this.movementEnabled = true;
 
         this.debugParams = {
@@ -47,19 +48,27 @@ export class UIManager {
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
                 this.createUI();
+                this.createInstructionHUD();
                 this.bindEvents();
                 this.applyInitialState();
             });
         } else {
             this.createUI();
+            this.createInstructionHUD();
             this.bindEvents();
             this.applyInitialState();
         }
-
     }
 
     applyInitialState() {
-        if (!this.scene || !this.scene.lightsaber) return;
+        if (!this.scene || !this.scene.lightsaber) {
+            // Still ensure physics & HUD status reflect initial tracking state
+            if (this.physics?.setMovementEnabled) {
+                this.physics.setMovementEnabled(this.movementEnabled);
+            }
+            this.updateInstructionStatus(this.movementEnabled);
+            return;
+        }
 
         const s = this.scene.lightsaber;
 
@@ -90,165 +99,234 @@ export class UIManager {
 
         this.physics.setSensitivity(this.params.sensitivity);
         this.physics.setInertia(this.params.inertia);
-    }
 
+        // Ensure physics knows the initial movement state
+        this.physics.setMovementEnabled?.(this.movementEnabled);
+        this.updateInstructionStatus(this.movementEnabled);
+    }
 
     createUI() {
         const panel = document.createElement('div');
         panel.id = 'ui-panel';
 
+        // NOTE: Using actual tags (no HTML entities) so the panel renders properly
         panel.innerHTML = `
-            <h2>Control Panel</h2>
+      <h2>Control Panel</h2>
 
-            <h6>Saber Settings</h6>
+      <h6>Saber Settings</h6>
 
-            <label>
-                Saber On
-                <input type="checkbox" id="saber_toggle" checked>
-            </label>
+      <label>
+        Saber On
+        <input type="checkbox" id="saber_toggle" checked>
+      </label>
 
-            <label>
-                Snoise Mode
-                <input type="checkbox" id="saber_mode" checked>
-            </label>
+      <label>
+        Snoise Mode
+        <input type="checkbox" id="saber_mode" checked>
+      </label>
 
-            <label>
-                Sensitivity
-                <input type="range" id="sensitivity" min="0.1" max="1" step="0.01" value="${this.params.sensitivity}">
-            </label>
+      <label>
+        Sensitivity
+        <input type="range" id="sensitivity" min="0.1" max="1" step="0.01" value="${this.params.sensitivity}">
+      </label>
 
-            <label>
-                Inertia
-                <input type="range" id="inertia" min="0.1" max="1" step="0.01" value="${this.params.inertia}">
-            </label>
+      <label>
+        Inertia
+        <input type="range" id="inertia" min="0.1" max="1" step="0.01" value="${this.params.inertia}">
+      </label>
 
-            <label>
-                Flicker Intensity
-                <input type="range" id="flickerIntensity" min="0" max="1" step="0.01" value="${this.params.flickerIntensity}">
-            </label>
+      <label>
+        Flicker Intensity
+        <input type="range" id="flickerIntensity" min="0" max="1" step="0.01" value="${this.params.flickerIntensity}">
+      </label>
 
-            <label>
-                Blade Color
-                <input type="color" id="color" value="${this.params.color}">
-            </label>
+      <label>
+        Blade Color
+        <input type="color" id="color" value="${this.params.color}">
+      </label>
 
-            <label>
-                Mini-Game
-                <input type="checkbox" id="minigame_toggle" checked>
-            </label>
-            
-            <h6>Audio Settings</h6>
-            <label>
-                Sound On
-                <input type="checkbox" id="sound_toggle">
-            </label>
+      <label>
+        Mini-Game
+        <input type="checkbox" id="minigame_toggle" checked>
+      </label>
 
-            <h6>Rendering Settings</h6>
+      <h6>Audio Settings</h6>
+      <label>
+        Sound On
+        <input type="checkbox" id="sound_toggle">
+      </label>
 
-            <label>
-                Algorithm
-                <select id="algorithm">
-                    <option value="A">A</option>
-                    <option value="B">B</option>
-                    <option value="C">C</option>
-                </select>
-            </label>
+      <h6>Rendering Settings</h6>
 
-            <h6 class="collapsible" data-target="handle-section">
-                <span class="arrow">▶</span> Handle Settings
-            </h6>
-            <div id="handle-section" class="collapsible-content collapsed">
-                <label>
-                    Metallic
-                    <input type="range" id="metallic" min="0" max="1" step="0.01" value="${this.params.metallic}">
-                </label>
+      <label>
+        Algorithm
+        <select id="algorithm">
+          <option value="A">A</option>
+          <option value="B">B</option>
+          <option value="C">C</option>
+        </select>
+      </label>
 
-                <label>
-                    Roughness
-                    <input type="range" id="roughness" min="0" max="1" step="0.01" value="${this.params.roughness}">
-                </label>
+      <h6 class="collapsible" data-target="handle-section">
+        <span class="arrow">▶</span> Handle Settings
+      </h6>
+      <div id="handle-section" class="collapsible-content collapsed">
+        <label>
+          Metallic
+          <input type="range" id="metallic" min="0" max="1" step="0.01" value="${this.params.metallic}">
+        </label>
 
-                <label>
-                    Clearcoat
-                    <input type="range" id="clearcoat" min="0" max="1" step="0.01" value="${this.params.clearcoat}">
-                </label>
-                
-                <label>
-                    Clearcoat Gloss
-                    <input type="range" id="clearcoatgloss" min="0" max="1" step="0.01" value="${this.params.clearcoatGloss}">
-                </label>  
-                
-                <label>
-                    Sheen
-                    <input type="range" id="sheen" min="0" max="1" step="0.01" value="${this.params.sheen}">
-                </label>    
-                
-                <label>
-                    Sheen Tint
-                    <input type="range" id="sheentint" min="0" max="1" step="0.01" value="${this.params.sheenTint}">
-                </label> 
-                
-                <label>
-                    Subsurface
-                    <input type="range" id="subsurface" min="0" max="1" step="0.01" value="${this.params.subsurface}">
-                </label>
+        <label>
+          Roughness
+          <input type="range" id="roughness" min="0" max="1" step="0.01" value="${this.params.roughness}">
+        </label>
 
-                <label>
-                    Handle Color
-                    <input type="color" id="handlecolor" value="${this.params.handleColor}">
-                </label>
-            </div>
+        <label>
+          Clearcoat
+          <input type="range" id="clearcoat" min="0" max="1" step="0.01" value="${this.params.clearcoat}">
+        </label>
 
-            <h6 class="collapsible" data-target="bloom-section">
-                <span class="arrow">▶</span> Bloom Settings
-            </h6>
-            <div id="bloom-section" class="collapsible-content collapsed">
-                <label>
-                    Bloom Strength
-                    <input type="range" id="bloomStrength" min="0" max="3" step="0.01" value="${this.params.bloomStrength}">
-                </label>
+        <label>
+          Clearcoat Gloss
+          <input type="range" id="clearcoatgloss" min="0" max="1" step="0.01" value="${this.params.clearcoatGloss}">
+        </label>
 
-                <label>
-                    Bloom Radius
-                    <input type="range" id="bloomRadius" min="0" max="1" step="0.01" value="${this.params.bloomRadius}">
-                </label>
+        <label>
+          Sheen
+          <input type="range" id="sheen" min="0" max="1" step="0.01" value="${this.params.sheen}">
+        </label>
 
-                <label>
-                    Bloom Threshold
-                    <input type="range" id="bloomThreshold" min="0" max="1" step="0.01" value="${this.params.bloomThreshold}">
-                </label>
+        <label>
+          Sheen Tint
+          <input type="range" id="sheentint" min="0" max="1" step="0.01" value="${this.params.sheenTint}">
+        </label>
 
-                <label>
-                    Exposure
-                    <input type="range" id="exposure" min="0" max="3" step="0.01" value="${this.params.exposure}">
-                </label>
-            </div>
+        <label>
+          Subsurface
+          <input type="range" id="subsurface" min="0" max="1" step="0.01" value="${this.params.subsurface}">
+        </label>
 
-            <h6 class="collapsible" data-target="floor-section">
-                <span class="arrow">▶</span> Floor Settings
-            </h6>
-            <div id="floor-section" class="collapsible-content collapsed">
-                <label>
-                    Floor Attenuation
-                    <input type="range" id="floorAttenuation" min="0.01" max="1" step="0.01" value="${this.params.floorAttenuation}">
-                </label>
+        <label>
+          Handle Color
+          <input type="color" id="handlecolor" value="${this.params.handleColor}">
+        </label>
+      </div>
 
-                <label>
-                    Floor Max Distance
-                    <input type="range" id="floorMaxDist" min="1" max="50" step="0.5" value="${this.params.floorMaxDist}">
-                </label>
-            </div>
+      <h6 class="collapsible" data-target="bloom-section">
+        <span class="arrow">▶</span> Bloom Settings
+      </h6>
+      <div id="bloom-section" class="collapsible-content collapsed">
+        <label>
+          Bloom Strength
+          <input type="range" id="bloomStrength" min="0" max="3" step="0.01" value="${this.params.bloomStrength}">
+        </label>
 
-            <h6>Real-Time Status</h6>
-            <div id="debug">
-                <div class="my-panel">Swing Speed: <span id="dbg_swing"></span></div>
-                <div class="my-panel">Rot: <span id="dbg_rot"></span></div>
-                <div class="my-panel">Pos: <span id="dbg_pos"></span></div>
-            </div>
-        `;
+        <label>
+          Bloom Radius
+          <input type="range" id="bloomRadius" min="0" max="1" step="0.01" value="${this.params.bloomRadius}">
+        </label>
+
+        <label>
+          Bloom Threshold
+          <input type="range" id="bloomThreshold" min="0" max="1" step="0.01" value="${this.params.bloomThreshold}">
+        </label>
+
+        <label>
+          Exposure
+          <input type="range" id="exposure" min="0" max="3" step="0.01" value="${this.params.exposure}">
+        </label>
+      </div>
+
+      <h6 class="collapsible" data-target="floor-section">
+        <span class="arrow">▶</span> Floor Settings
+      </h6>
+      <div id="floor-section" class="collapsible-content collapsed">
+        <label>
+          Floor Attenuation
+          <input type="range" id="floorAttenuation" min="0.01" max="1" step="0.01" value="${this.params.floorAttenuation}">
+        </label>
+
+        <label>
+          Floor Max Distance
+          <input type="range" id="floorMaxDist" min="1" max="50" step="0.5" value="${this.params.floorMaxDist}">
+        </label>
+      </div>
+
+      <h6>Real-Time Status</h6>
+      <div id="debug">
+        <div class="my-panel">Swing Speed: <span id="dbg_swing"></span></div>
+        <div class="my-panel">Rot: <span id="dbg_rot"></span></div>
+        <div class="my-panel">Pos: <span id="dbg_pos"></span></div>
+      </div>
+    `;
 
         document.body.appendChild(panel);
         document.getElementById('algorithm').value = this.params.algorithm;
+    }
+
+    createInstructionHUD() {
+        const hud = document.createElement('div');
+        hud.id = 'hud-controls';
+        hud.className = 'hud-controls';
+        hud.innerHTML = `
+        <div class="hud-title">Control Instruction</div>
+        <ul class="hud-list hud-keys">
+        <li>
+            <span class="action">Curser</span>
+            <span class="desc">Yield lightsaber</span>
+        </li>        
+        <li>
+            <span class="action">Drag</span>
+            <span class="desc">Shift camera angle</span>
+        </li>       
+        <li>
+            <span class="action">Left-Click</span>
+            <span class="desc">Default camera angle</span>
+        </li>
+        <li>
+            <span class="action">Scroll</span>
+            <span class="desc">Camera Zoom</span>
+        </li>  
+        <li>
+            <span class="keys">
+            <kbd>Space</kbd>
+            </span>
+            <span class="desc">Enable mouse tracking</span>
+        </li>
+        <li>
+            <span class="keys">
+            <kbd>Esc</kbd>
+            </span>
+            <span class="desc">Disable mouse tracking</span>
+        </li>
+        </ul>
+        <div class="hud-status">
+        Mouse tracking: <span id="hud-saber-status" class="on">Enabled</span>
+        </div>
+  `;
+        document.body.appendChild(hud);
+    }
+
+    updateInstructionStatus(enabled) {
+        const el = document.getElementById('hud-saber-status');
+        if (!el) return;
+        el.textContent = enabled ? 'Enabled' : 'Disabled';
+        el.classList.toggle('on', enabled);
+        el.classList.toggle('off', !enabled);
+    }
+
+    setMovementEnabled(enabled) {
+        this.movementEnabled = !!enabled;
+
+        // Inform physics and any listeners
+        this.physics.setMovementEnabled?.(this.movementEnabled);
+        this.setTrackingPaused(!this.movementEnabled);
+
+        // Visual hint (optional)
+        document.body.style.cursor = this.movementEnabled ? 'default' : 'not-allowed';
+
+        // Update HUD
+        this.updateInstructionStatus(this.movementEnabled);
     }
 
     bindEvents() {
@@ -263,24 +341,14 @@ export class UIManager {
 
         $('sound_toggle').addEventListener('change', (e) => {
             this.params.sound = e.target.checked;
-
-            if (this.scene.lightsaber && this.scene.lightsaber.setSoundEnable) {
+            if (this.scene.lightsaber?.setSoundEnable) {
                 this.scene.lightsaber.setSoundEnable(e.target.checked);
             }
         });
 
-        // $('music_toggle').addEventListener('change', (e) => {
-        //     this.params.music = e.target.checked;
-
-        //     if (this.scene.lightsaber && this.scene.setMusicEnable) {
-        //         this.scene.setMusicEnable(e.target.checked);
-        //     }
-        // });
-
         $('minigame_toggle').addEventListener('change', (e) => {
             this.params.miniGame = e.target.checked;
-
-            if (this.scene.projectileManager && this.scene.projectileManager.setEnabled) {
+            if (this.scene.projectileManager?.setEnabled) {
                 this.scene.projectileManager.setEnabled(e.target.checked);
             }
         });
@@ -299,8 +367,9 @@ export class UIManager {
             }
         });
 
+        // FIX: store under the right param name and call the right API
         $('handlecolor').addEventListener('input', (e) => {
-            this.params.handleColorcolor = e.target.value;
+            this.params.handleColor = e.target.value;
             if (this.scene.lightsaber) {
                 this.scene.lightsaber.setHandleColor(e.target.value);
             }
@@ -393,53 +462,40 @@ export class UIManager {
         $('bloomStrength').addEventListener('input', (e) => {
             const v = parseFloat(e.target.value);
             this.params.bloomStrength = v;
-            if (this.scene.setBloomStrength) {
-                this.scene.setBloomStrength(v);
-            }
+            this.scene.setBloomStrength?.(v);
         });
 
         $('bloomRadius').addEventListener('input', (e) => {
             const v = parseFloat(e.target.value);
             this.params.bloomRadius = v;
-            if (this.scene.setBloomRadius) {
-                this.scene.setBloomRadius(v);
-            }
+            this.scene.setBloomRadius?.(v);
         });
 
         $('bloomThreshold').addEventListener('input', (e) => {
             const v = parseFloat(e.target.value);
             this.params.bloomThreshold = v;
-            if (this.scene.setBloomThreshold) {
-                this.scene.setBloomThreshold(v);
-            }
+            this.scene.setBloomThreshold?.(v);
         });
 
         $('exposure').addEventListener('input', (e) => {
             const v = parseFloat(e.target.value);
             this.params.exposure = v;
-            if (this.scene.setExposure) {
-                this.scene.setExposure(v);
-            }
+            this.scene.setExposure?.(v);
         });
 
         // Floor controls
         $('floorAttenuation').addEventListener('input', (e) => {
             const v = parseFloat(e.target.value);
             this.params.floorAttenuation = v;
-            if (this.scene.floor && this.scene.floor.setAttenuation) {
-                this.scene.floor.setAttenuation(v);
-            }
+            this.scene.floor?.setAttenuation?.(v);
         });
 
         $('floorMaxDist').addEventListener('input', (e) => {
             const v = parseFloat(e.target.value);
             this.params.floorMaxDist = v;
-            if (this.scene.floor && this.scene.floor.setMaxDist) {
-                this.scene.floor.setMaxDist(v);
-            }
+            this.scene.floor?.setMaxDist?.(v);
         });
 
-        // Collapsible sections toggle
         document.querySelectorAll('.collapsible').forEach((header) => {
             header.addEventListener('click', () => {
                 const targetId = header.getAttribute('data-target');
@@ -456,38 +512,15 @@ export class UIManager {
             });
         });
 
-        let lastToggleTs = 0;
-        document.addEventListener('click', (e) => {
-        // Left click only
-        if (e.button !== 0) return;
-
-        // Ignore clicks on the UI panel
-        if (e.target.closest('#ui-panel')) return;
-
-        // If some other handler (e.g., orbit after a drag) consumed this click, ignore
-        if (e.defaultPrevented) return;
-
-        // Debounce quick double-clicks (optional)
-        const now = performance.now();
-        if (now - lastToggleTs < 150) return;
-        lastToggleTs = now;
-
-        // Toggle movement
-        this.movementEnabled = !this.movementEnabled;
-
-        if (this.physics.setMovementEnabled) {
-            this.physics.setMovementEnabled(this.movementEnabled);
-        }
-
-        // Keep "paused" state in sync and inform listeners (App -> dragOrbit)
-        this.setTrackingPaused(!this.movementEnabled);
-
-        // Optional cursor feedback
-
-        document.body.style.cursor = this.movementEnabled ? 'default' : 'not-allowed';
-        }, { passive: true });
-
-
+        const onKeyDown = (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault(); // prevent page scroll
+                this.setMovementEnabled(true);
+            } else if (e.code === 'Escape') {
+                this.setMovementEnabled(false);
+            }
+        };
+        window.addEventListener('keydown', onKeyDown, { passive: false });
     }
 
     updateStatus(saber_state) {
@@ -502,12 +535,12 @@ export class UIManager {
     }
 
     setTrackingPaused(v) {
-    this.trackingPaused = !!v;
-    if (this.onTrackingPauseChanged) this.onTrackingPauseChanged(this.trackingPaused);
+        this.trackingPaused = !!v;
+        if (this.onTrackingPauseChanged) this.onTrackingPauseChanged(this.trackingPaused);
     }
 
-    isTrackingPaused() { 
-        return this.trackingPaused; 
+    isTrackingPaused() {
+        return this.trackingPaused;
     }
-
 }
+

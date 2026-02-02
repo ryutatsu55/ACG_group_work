@@ -6,7 +6,6 @@ import Stats from "stats.js";
 import * as THREE from 'three';
 // import { Sound } from './Sound.js';
 import { addScrollZoomPerspective } from '../controls/scrollZoomPerspective.js';
-import { createDragOrbit } from '../controls/dragOrbit.js';
 import { createDragOrbitPerspective } from '../controls/dragOrbitPerspective.js';
 
 export class App {
@@ -37,34 +36,20 @@ export class App {
     // };
 
     this.uiSystem = new UIManager(this.sceneSystem, this.physicsSystem);
-    
-    // this.dragOrbit = createDragOrbit({
-    //   camera,
-    //   domElement: dom,
-    //   rotateSpeed: 0.0025,
-    //   dragThresholdPx: 4,
-    //   resetAnimSec: 0.25
-    //   // getTarget: () => {
-    //   //   const v = new THREE.Vector3();
-    //   //   this.sceneSystem.lightsaber.hilt.getWorldPosition(v);
-    //   //   return v;
-    //   // },
-    // });
 
+    this.dragOrbit = createDragOrbitPerspective({
+      camera,
+      domElement: dom,
+      rotateSpeed: 0.0025,
+      dragThresholdPx: 4,
+      resetAnimSec: 0.25,
 
-this.dragOrbit = createDragOrbitPerspective({
-    camera,
-    domElement: dom,
-    rotateSpeed: 0.0025,
-    dragThresholdPx: 4,
-    resetAnimSec: 0.25,
-
-  });
+    });
 
     this.dragOrbit.setDefault({
-    targetW: new THREE.Vector3(0, 0, 0),
-    spherical: { radius: 3, phi: Math.PI/2, theta: 0 }
-  });
+      targetW: new THREE.Vector3(0, 0, 0),
+      spherical: { radius: 3, phi: Math.PI / 2, theta: 0 }
+    });
 
     if (this.uiSystem && typeof this.uiSystem.onTrackingPauseChanged === 'function') {
       this.uiSystem.onTrackingPauseChanged((paused) => {

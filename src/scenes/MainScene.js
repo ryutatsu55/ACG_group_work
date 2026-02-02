@@ -141,7 +141,6 @@ export class MainScene {
         return this.renderer ? this.renderer.domElement : document.body; 
     }
 
-
     setExternalOrbitActive(v) { this._externalOrbitActive = !!v; }
 
 }
